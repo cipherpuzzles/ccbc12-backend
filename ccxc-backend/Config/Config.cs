@@ -40,14 +40,14 @@ namespace ccxc_backend.Config
         [OptionDescription("默认罚时时间，单位小时，默认12.0")]
         public double PenaltyDefault { get; set; } = 12.0;
 
-        [OptionDescription("开赛时间，Unix时间戳（毫秒），默认为2021-08-06 20:00:00 +0800 aka. 1628251200000")]
-        public long StartTime { get; set; } = 1628251200000;
+        [OptionDescription("开赛时间，Unix时间戳（毫秒）")]
+        public long StartTime { get; set; } = 1660305600000;
 
-        [OptionDescription("完赛时间，Unix时间戳（毫秒），默认为2020-08-22 20:00:00 +0800 aka. 1629633600000")]
-        public long EndTime { get; set; } = 1629633600000;
+        [OptionDescription("完赛时间，Unix时间戳（毫秒）")]
+        public long EndTime { get; set; } = 1661083200000;
 
-        [OptionDescription("报名截止日期，0为不限制，Unix时间戳（毫秒），默认为2020-08-06 19:00:00 +0800 aka. 1628247600000")]
-        public long RegDeadline { get; set; } = 1628247600000;
+        [OptionDescription("报名截止日期，0为不限制，Unix时间戳（毫秒）")]
+        public long RegDeadline { get; set; } = 1660305600000;
 
         [OptionDescription("至少完成多少个区域以后才可见PreFinalMeta")]
         public int ShowFinalGroups { get; set; } = 4;

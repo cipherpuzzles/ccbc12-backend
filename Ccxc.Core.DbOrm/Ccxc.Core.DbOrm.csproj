@@ -1,12 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MySql.Data" Version="8.0.24" />
-    <PackageReference Include="sqlSugarCoreNoDrive" Version="5.0.2.8" />
+    <PackageReference Include="MySqlConnector" Version="2.1.9" />
+    <PackageReference Include="SqlSugarCore.MySqlConnector" Version="5.0.5.2" />
     <PackageReference Include="System.Net.NameResolution" Version="4.3.0" />
     <PackageReference Include="System.Threading.ThreadPool" Version="4.3.0" />
   </ItemGroup>

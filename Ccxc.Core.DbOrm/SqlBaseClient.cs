@@ -10,7 +10,6 @@ namespace Ccxc.Core.DbOrm
             ConnectionString = connStr,
             IsAutoCloseConnection = true,
             InitKeyType = InitKeyType.Attribute,
-            IsShardSameThread = true
         })
         {
 
@@ -22,7 +21,6 @@ namespace Ccxc.Core.DbOrm
             ConnectionString = connStr,
             IsAutoCloseConnection = true,
             InitKeyType = initKeyFromAttribute ? InitKeyType.Attribute : InitKeyType.SystemTable,
-            IsShardSameThread = true
         })
         {
 
