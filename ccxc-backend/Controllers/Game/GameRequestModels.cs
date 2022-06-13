@@ -7,7 +7,9 @@ namespace ccxc_backend.Controllers.Game
 {
     public class PuzzleStartResponse : BasicResponse
     {
+        public string start_prefix { get; set; }
         public string ticket { get; set; }
+        public int is_first { get; set; }
     }
 
     public class GetPuzzleGroupResponse : BasicResponse

@@ -51,6 +51,14 @@ namespace ccxc_backend.Controllers.Users
         }
     }
 
+    public class PuzzleCheckTicketResponse : UserLoginResponse
+    {
+        /// <summary>
+        /// 正式游戏服务中登陆后跳转的页面（0-序章 1-本篇）
+        /// </summary>
+        public int open_type { get; set; }
+    }
+
     public class ModifyPasswordRequest
     {
         [Required(Message = "原密码不能为空")]

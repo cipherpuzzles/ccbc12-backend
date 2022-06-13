@@ -139,13 +139,42 @@ namespace ccxc_backend.Controllers.Users
                 return;
             }
 
+            var openType = 0;
+
+            //取得该用户GID
+            var groupBindDb = DbFactory.Get<UserGroupBind>();
+            var groupBindList = await groupBindDb.SelectAllFromCache();
+
+            var groupBindItem = groupBindList.FirstOrDefault(it => it.uid == userSession.uid);
+            if (groupBindItem == null)
+            {
+                //无组队，open_type只能为0
+            }
+            else
+            {
+
+                var gid = groupBindItem.gid;
+
+                //取得进度
+                var progressDb = DbFactory.Get<Progress>();
+                var progress = await progressDb.SimpleDb.AsQueryable().Where(it => it.gid == gid).FirstAsync();
+
+                if (progress != null && progress.data != null)
+                {
+                    if (progress.data.IsOpenMainProject)
+                    {
+                        openType = 1;
+                    }
+                }
+            }
+
             //返回给前端足以让前端恢复User-Token登录状态的信息
             loginLog.status = 6;
             loginLog.username = userSession.username;
             loginLog.uid = userSession.uid;
             await loginLogDb.SimpleDb.AsInsertable(loginLog).ExecuteCommandAsync();
 
-            await response.JsonResponse(200, new UserLoginResponse
+            await response.JsonResponse(200, new PuzzleCheckTicketResponse
             {
                 status = 1,
                 user_login_info = new UserLoginResponse.UserLoginInfo
@@ -156,7 +185,8 @@ namespace ccxc_backend.Controllers.Users
                     token = userSession.token,
                     sk = userSession.sk,
                     etc = userSession.is_betaUser == 1 ? "52412" : "10000"
-                }
+                },
+                open_type = openType
             });
         }
 

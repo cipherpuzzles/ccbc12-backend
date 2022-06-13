@@ -3,11 +3,13 @@ using Ccxc.Core.Utils.ExtensionFunctions;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace ccxc_backend.DataModels
 {
-    public class temp_anno
+    public class temp_prologue_anno
     {
         [DbColumn(IsPrimaryKey = true, ColumnDescription = "题目ID")]
         public int pid { get; set; }
@@ -18,17 +20,11 @@ namespace ccxc_backend.DataModels
 
         [DbColumn(ColumnDescription = "公告内容", ColumnDataType = "TEXT", IsNullable = true)]
         public string content { get; set; }
-
-        [DbColumn(ColumnDescription = "公告是否已发布（0-未发布 1-已发布）")]
-        public byte is_pub { get; set; }
-
-        [DbColumn(IsIgnore = true)]
-        public string puzzle_name { get; set; }
     }
 
-    public class TempAnno : MysqlClient<temp_anno>
+    public class TempPrologueAnno : MysqlClient<temp_prologue_anno>
     {
-        public TempAnno(string connStr) : base(connStr)
+        public TempPrologueAnno(string connStr) : base(connStr)
         {
 
         }

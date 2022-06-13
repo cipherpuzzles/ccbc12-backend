@@ -2,10 +2,14 @@
 using Ccxc.Core.Utils.ExtensionFunctions;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace ccxc_backend.DataModels
 {
-    public class answer_log
+    public class temp_prologue_answer_log
     {
         [DbColumn(IsPrimaryKey = true, IsIdentity = true, ColumnDescription = "答案记录ID")]
         public int id { get; set; }
@@ -31,14 +35,19 @@ namespace ccxc_backend.DataModels
         /// </summary>
         [DbColumn(ColumnDescription = "答案状态（0-保留 1-正确 2-答案错误 3-在冷却中而未判断 4-该题目不可见而无法回答 5-发生存档错误而未判定 6-符合隐藏关键字而跳转 7-解锁提示）", IndexGroupNameList = new string[] { "index_gid_pid" })]
         public byte status { get; set; }
+
+        [DbColumn(ColumnDescription = "使用答案模板")]
+        public int template { get; set; }
+
+        [DbColumn(ColumnDescription = "正确答案")]
+        public string correct_answer { get; set; }
     }
 
-    public class AnswerLog : MysqlClient<answer_log>
+    public class TempPrologueAnswerLog : MysqlClient<temp_prologue_answer_log>
     {
-        public AnswerLog(string connStr) : base(connStr)
+        public TempPrologueAnswerLog(string connStr) : base(connStr)
         {
 
         }
     }
-
 }

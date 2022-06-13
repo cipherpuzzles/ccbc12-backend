@@ -61,6 +61,9 @@ namespace ccxc_backend.Config
         [OptionDescription("阿里云邮件推送服务Access Secret")]
         public string AliyunDmAccessSecret { get; set; } = "";
 
+        [OptionDescription("题目部分独立前端地址前缀（仅域名，不要以/结尾）")]
+        public string GamePrefix { get; set; } = "https://puzzle.ccbc11.test";
+
         public static Config Options { get; set; } = SystemOption.GetOption<Config>("Config/CcxcConfig.xml");
     }
 }

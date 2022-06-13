@@ -107,7 +107,7 @@ namespace ccxc_backend.Controllers.System
                     }
 
                     r.score = progress.score;
-                    r.finished_puzzle_count = progress.data.FinishedPuzzles.Count;
+                    r.finished_puzzle_count = progress.data.FinishedProblems.Count;
                 }
 
                 return r;

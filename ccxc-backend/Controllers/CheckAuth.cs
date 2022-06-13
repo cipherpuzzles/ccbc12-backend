@@ -66,17 +66,6 @@ namespace ccxc_backend.Controllers
             var ts = xAuth[1];
             var sign = xAuth[2];
 
-            //ts判断，客户端与前端钟差不能大于5min
-            long.TryParse(ts, out var tsNum);
-            var signedTime = UnixTimestamp.FromTimestamp(tsNum);
-            var diff = Math.Abs((DateTime.Now - signedTime).TotalMinutes);
-            if(diff > 5)
-            {
-                await response.Unauthorized($"客户端时钟不准，无法完成加密认证。请调整至正确的时间。服务器时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-                return null;
-            }
-
-
             //从缓存中取出Session
             var cache = DbFactory.GetCache();
 
