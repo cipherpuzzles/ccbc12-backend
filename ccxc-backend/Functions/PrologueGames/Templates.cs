@@ -1,4 +1,5 @@
 ﻿using ccxc_backend.DataModels;
+using ccxc_backend.DataServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ namespace ccxc_backend.Functions.PrologueGames
 {
     public static class Templates
     {
-        public static Dictionary<int, Func<string, (string, int)>> TemplateDicts = new Dictionary<int, Func<string, (string, int)>>
+        public static Dictionary<int, Func<string, (string, int, string)>> TemplateDicts = new()
         {
             {0, AlphabetToNumber },
             {1, Add3 },
@@ -25,7 +26,7 @@ namespace ccxc_backend.Functions.PrologueGames
             {11, Railfence },
         };
 
-        public static (string, int) GenerateProblem(PrologueSaveData data)
+        public static (string, int, string) GenerateProblem(PrologueSaveData data)
         {
             var answer = data.CurrentAnswer;
             var template = data.TemplateBag[data.CurrentTemplateIndex];
@@ -34,23 +35,23 @@ namespace ccxc_backend.Functions.PrologueGames
             return method.Invoke(answer);
         }
 
-        public static (string, int) AlphabetToNumber(string answer)
+        public static (string, int, string) AlphabetToNumber(string answer)
         {
             var answerLetters = answer.ToUpper().Replace(" ", "").ToCharArray();
             var numbers = answerLetters.Select(x => x - 'A' + 1).ToList();
             var result = string.Join(" ", numbers);
-            return (result, 0);
+            return (result, 0, "字母顺序替换");
         }
 
-        public static (string, int) Add3(string answer)
+        public static (string, int, string) Add3(string answer)
         {
             var answerLetters = answer.ToUpper().Replace(" ", "").ToCharArray();
             var numbers = answerLetters.Select(x => (char)(((x - 'A' + 3) % 26) + 'A')).ToList();
             var result = string.Join("", numbers);
-            return (result, 0);
+            return (result, 0, "凯撒移位");
         }
 
-        public static (string, int) Morse(string answer)
+        public static (string, int, string) Morse(string answer)
         {
             Dictionary<char, string> morseDict = new()
             {
@@ -84,18 +85,18 @@ namespace ccxc_backend.Functions.PrologueGames
             var answerLetters = answer.ToUpper().Replace(" ", "").ToCharArray();
             var numbers = answerLetters.Select(x => morseDict[x]).ToList();
             var result = string.Join("/", numbers);
-            return (result, 0);
+            return (result, 0, "摩尔斯电码");
         }
 
-        public static (string, int) Binary(string answer)
+        public static (string, int, string) Binary(string answer)
         {
             var answerLetters = answer.ToUpper().Replace(" ", "").ToCharArray();
             var numbers = answerLetters.Select(x => Convert.ToString((x - 'A' + 1), 2).PadLeft(5, '0')).ToList();
             var result = string.Join(" ", numbers);
-            return (result, 0);
+            return (result, 0, "二进制");
         }
 
-        public static (string, int) Braille(string answer)
+        public static (string, int, string) Braille(string answer)
         {
             Dictionary<char, string> brailleDict = new()
             {
@@ -129,10 +130,10 @@ namespace ccxc_backend.Functions.PrologueGames
             var answerLetters = answer.ToUpper().Replace(" ", "").ToCharArray();
             var numbers = answerLetters.Select(x => brailleDict[x]).ToList();
             var result = string.Join(" ", numbers);
-            return (result, 1);
+            return (result, 1, "盲文");
         }
 
-        public static (string, int) Pigpen(string answer)
+        public static (string, int, string) Pigpen(string answer)
         {
             // 文件名命名规则
             //     1      5     6
@@ -140,8 +141,6 @@ namespace ccxc_backend.Functions.PrologueGames
             // 2 |  | 3
             //    ——       /  \
             //     4      7     8
-
-
             Dictionary<char, string> pigpenDict = new()
             {
                 {'A', "い" },
@@ -174,18 +173,18 @@ namespace ccxc_backend.Functions.PrologueGames
             var answerLetters = answer.ToUpper().Replace(" ", "").ToCharArray();
             var numbers = answerLetters.Select(x => pigpenDict[x]).ToList();
             var result = string.Join(" ", numbers);
-            return (result, 2);
+            return (result, 2, "猪圈密码");
         }
 
-        public static (string, int) Revserse(string answer)
+        public static (string, int, string) Revserse(string answer)
         {
             var answerLetters = answer.ToUpper().Replace(" ", "").ToCharArray();
             var numbers = answerLetters.Reverse().ToList();
             var result = string.Join("", numbers);
-            return (result, 0);
+            return (result, 0, "倒序");
         }
 
-        public static (string, int) FlagSemaphore(string answer)
+        public static (string, int, string) FlagSemaphore(string answer)
         {
             // 文件名命名规则
             //  2   1   8
@@ -225,10 +224,10 @@ namespace ccxc_backend.Functions.PrologueGames
             var answerLetters = answer.ToUpper().Replace(" ", "").ToCharArray();
             var numbers = answerLetters.Select(x => flagDict[x]).ToList();
             var result = string.Join(" ", numbers);
-            return (result, 2);
+            return (result, 2, "旗语");
         }
 
-        public static (string, int) Phone9Key(string answer)
+        public static (string, int, string) Phone9Key(string answer)
         {
             // 1    2    3
             //     ABC  DEF
@@ -268,10 +267,10 @@ namespace ccxc_backend.Functions.PrologueGames
             var answerLetters = answer.ToUpper().Replace(" ", "").ToCharArray();
             var numbers = answerLetters.Select(x => phone9KeyDict[x]).ToList();
             var result = string.Join(" ", numbers);
-            return (result, 0);
+            return (result, 0, "九键键盘替换");
         }
 
-        public static (string, int) Polybius(string answer)
+        public static (string, int, string) Polybius(string answer)
         {
             Dictionary<char, string> polybiusDict = new()
             {
@@ -305,18 +304,18 @@ namespace ccxc_backend.Functions.PrologueGames
             var answerLetters = answer.ToUpper().Replace(" ", "").ToCharArray();
             var numbers = answerLetters.Select(x => polybiusDict[x]).ToList();
             var result = string.Join(" ", numbers);
-            return (result, 0);
+            return (result, 0, "5*5棋盘密码");
         }
 
-        public static (string, int) Atbash(string answer)
+        public static (string, int, string) Atbash(string answer)
         {
             var answerLetters = answer.ToUpper().Replace(" ", "").ToCharArray();
             var numbers = answerLetters.Select(x => (char)(25 - x + 'A' + 'A')).ToList();
             var result = string.Join("", numbers);
-            return (result, 0);
+            return (result, 0, "Atbash");
         }
 
-        public static (string, int) Railfence(string answer)
+        public static (string, int, string) Railfence(string answer)
         {
             var answerLetters = answer.ToUpper().Replace(" ", "").ToCharArray();
 
@@ -332,7 +331,31 @@ namespace ccxc_backend.Functions.PrologueGames
                 results[k].Add(answerLetters[i]);
             }
             var result = string.Join("", results.Select(x => string.Join("", x)));
-            return (result, 0);
+            return (result, 0, "栅栏密码（3栏）");
+        }
+
+        public static async Task<string> GetPuzzleContent(int puzzleIndex, string method)
+        {
+            var pgdb = DbFactory.Get<PuzzleGroup>();
+            var puzzleContentList = await pgdb.GetSpPrologueContent();
+
+            var contentTemplate = "{{method}}";
+            foreach (var item in puzzleContentList)
+            {
+                if (item.lowBound == -1) continue;
+                if (puzzleIndex >= item.lowBound && puzzleIndex < item.highBound)
+                {
+                    contentTemplate = item.text;
+                    break;
+                }
+
+                if (item.highBound == -1 && puzzleIndex >= item.lowBound)
+                {
+                    contentTemplate = item.text;
+                }
+            }
+
+            return contentTemplate.Replace("{{method}}", method);
         }
     }
 }

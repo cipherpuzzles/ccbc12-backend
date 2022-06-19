@@ -78,14 +78,16 @@ namespace ccxc_backend.Controllers.Game
                 return;
             }
 
-            var (problemContent, usedReplacedAssets) = Functions.PrologueGames.Templates.GenerateProblem(prologueSaveData);
+            var (problemContent, usedReplacedAssets, method) = Templates.GenerateProblem(prologueSaveData);
+            var content = await Templates.GetPuzzleContent(prologueSaveData.CurrentProblem, method);
 
             await response.JsonResponse(200, new PrologueGetPuzzleDetailResponse
             {
                 status = 1,
                 puzzle_id = prologueSaveData.CurrentProblem,
                 problem_content = problemContent,
-                used_replaced_assets = usedReplacedAssets
+                used_replaced_assets = usedReplacedAssets,
+                content = content
             });
         }
 

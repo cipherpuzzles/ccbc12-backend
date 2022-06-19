@@ -23,12 +23,12 @@ namespace ccxc_backend.Functions.PrologueGames
 
             //获取当前题目
             var wordDict = WordDicts.W[data.CurrentProblem % 12];
-            var random = new Random();
+            var random = new Random(GetSeed(1));
             var wordIndex = random.Next(0, 500);
             data.CurrentAnswer = wordDict[wordIndex];
 
             //获取模板排列
-            data.TemplateBag = GetRandomTemplateList();
+            data.TemplateBag = GetRandomTemplateList(random);
 
             return data;
         }
@@ -38,7 +38,7 @@ namespace ccxc_backend.Functions.PrologueGames
             //更新当前题目
             saveData.CurrentProblem++;
             var wordDict = WordDicts.W[saveData.CurrentProblem % 12];
-            var random = new Random();
+            var random = new Random(GetSeed(saveData.CurrentProblem));
             var wordIndex = random.Next(0, 500);
             saveData.CurrentAnswer = wordDict[wordIndex];
 
@@ -47,7 +47,7 @@ namespace ccxc_backend.Functions.PrologueGames
             if (saveData.CurrentTemplateIndex == TEMPLATE_MAX_LENGTH)
             {
                 saveData.CurrentTemplateIndex = 0;
-                saveData.TemplateBag = GetRandomTemplateList();
+                saveData.TemplateBag = GetRandomTemplateList(random);
             }
 
             //更新时间
@@ -56,7 +56,7 @@ namespace ccxc_backend.Functions.PrologueGames
             return saveData;
         }
 
-        public static int[] GetRandomTemplateList()
+        public static int[] GetRandomTemplateList(Random random)
         {
             var arr = new int[TEMPLATE_MAX_LENGTH];
             for (int i = 0; i < arr.Length; i++)
@@ -64,7 +64,6 @@ namespace ccxc_backend.Functions.PrologueGames
                 arr[i] = i;
             }
 
-            var random = new Random();
             for (int i = arr.Length - 1; i >= 0; i--)
             {
                 var idx = random.Next(0, i + 1);
@@ -72,6 +71,11 @@ namespace ccxc_backend.Functions.PrologueGames
             }
 
             return arr;
+        }
+
+        public static int GetSeed(int problemIndex)
+        {
+            return 51047 * problemIndex + 2133611;
         }
     }
 }

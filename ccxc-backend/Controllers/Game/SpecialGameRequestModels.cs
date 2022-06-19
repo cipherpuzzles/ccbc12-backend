@@ -13,6 +13,7 @@ namespace ccxc_backend.Controllers.Game
         public int puzzle_id { get; set; }
         public string problem_content { get; set; }
         public int used_replaced_assets { get; set; }
+        public string content { get; set; }
     }
 
     public class PrologueScoreboardItem
