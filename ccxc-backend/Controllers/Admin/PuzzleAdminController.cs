@@ -32,6 +32,7 @@ namespace ccxc_backend.Controllers.Admin
             var puzzleDb = DbFactory.Get<Puzzle>();
             var newPuzzle = new puzzle
             {
+                second_key = requestJson.second_key,
                 pgid = requestJson.pgid,
                 type = requestJson.type,
                 title = requestJson.title,
@@ -99,6 +100,7 @@ namespace ccxc_backend.Controllers.Admin
             var updatePuzzle = new puzzle
             {
                 pid = requestJson.pid,
+                second_key = requestJson.second_key,
                 pgid = requestJson.pgid,
                 type = requestJson.type,
                 title = requestJson.title,

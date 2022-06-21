@@ -8,6 +8,7 @@ namespace ccxc_backend.Controllers.Admin
 {
     public class AddPuzzleRequest
     {
+        public int second_key { get; set; }
         public int pgid { get; set; }
         public byte type { get; set; }
 
@@ -41,6 +42,7 @@ namespace ccxc_backend.Controllers.Admin
     public class EditPuzzleRequest
     {
         public int pid { get; set; }
+        public int second_key { get; set; }
         public int pgid { get; set; }
         public byte type { get; set; }
 

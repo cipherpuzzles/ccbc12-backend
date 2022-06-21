@@ -7,6 +7,9 @@ namespace ccxc_backend.DataModels
         [DbColumn(IsPrimaryKey = true, IsIdentity = true, ColumnDescription = "题目ID")]
         public int pid { get; set; }
 
+        [DbColumn(ColumnDescription = "不用于ID的唯一编号", UniqueGroupNameList = new string[] { "unique_second_key" })]
+        public int second_key { get; set; }
+
         [DbColumn(ColumnDescription = "题目组ID", IndexGroupNameList = new string[] { "index_pgid" })]
         public int pgid { get; set; }
 

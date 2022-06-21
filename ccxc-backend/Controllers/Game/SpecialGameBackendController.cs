@@ -1,6 +1,7 @@
 ﻿using Ccxc.Core.HttpServer;
 using ccxc_backend.DataModels;
 using ccxc_backend.DataServices;
+using ccxc_backend.Functions;
 using ccxc_backend.Functions.PrologueGames;
 using Newtonsoft.Json;
 using System;
@@ -259,7 +260,7 @@ namespace ccxc_backend.Controllers.Game
                         progress.score = 0;
                         progress.update_time = now;
                         progress.is_finish = 0;
-                        progress.power_point = 1000;
+                        progress.power_point = await RedisNumberCenter.GetInt("initial-power-point"); //初始能量点
                         progress.power_point_update_time = now;
 
                         //回写存档
