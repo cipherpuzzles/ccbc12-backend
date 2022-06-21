@@ -7,12 +7,15 @@
     <Authors>Ted Zyzsdy</Authors>
     <Company>MeowSound Idols</Company>
     <Version>1.2.0</Version>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="aliyun-net-sdk-core" Version="1.5.11" />
     <PackageReference Include="aliyun-net-sdk-dm-overseas" Version="4.7.2" />
     <PackageReference Include="Hei.Captcha" Version="0.3.0" />
+    <PackageReference Include="SkiaSharp" Version="2.80.2" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.80.2" />
     <PackageReference Include="System.ComponentModel.Composition" Version="6.0.0" />
   </ItemGroup>
 

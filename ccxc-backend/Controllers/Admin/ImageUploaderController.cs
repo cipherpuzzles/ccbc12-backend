@@ -1,9 +1,11 @@
 ﻿using Ccxc.Core.HttpServer;
 using ccxc_backend.DataServices;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,12 +20,22 @@ namespace ccxc_backend.Controllers.Admin
             var userSession = await CheckAuth.Check(request, response, AuthLevel.Member);
             if (userSession == null) return;
 
+            var requestJson = request.Json<ImageUploadRequest>();
+
+            //判断请求是否有效
+            if (!Validation.Valid(requestJson, out string reason))
+            {
+                await response.BadRequest(reason);
+                return;
+            }
+
             var cache = DbFactory.GetCache();
             var imageUploadToken = Guid.NewGuid().ToString("n");
 
             var imageUploadCacheKey = cache.GetDataKey($"upload_prepare_{imageUploadToken}");
             await cache.Put(imageUploadCacheKey, new ImagePrepareData
             {
+                type = requestJson.type,
                 token = imageUploadToken
             }, 300000);
 
@@ -67,12 +79,33 @@ namespace ccxc_backend.Controllers.Admin
                 var file = request.RawRequest.Form.Files[0];
                 var fileExt = Path.GetExtension(file.FileName);
 
+                if (uploadPrepareObject.type == 1)
+                {
+                    fileExt = ".webp";
+                }
+
                 var fileName = fileGuid + fileExt;
                 var filePath = Path.Combine(fileDir, fileName);
 
 
-                await using var fileStream = new FileStream(filePath, FileMode.Create);
-                await file.CopyToAsync(fileStream);
+                if (uploadPrepareObject.type == 1)
+                {
+                    //处理图片
+                    using var memStream = new MemoryStream();
+                    await file.CopyToAsync(memStream);
+                    memStream.Position = 0; //准备 重用流
+
+                    using var bitmap = SKBitmap.Decode(memStream);
+                    using var fileStream = new FileStream(filePath, FileMode.Create);
+                    bitmap.Encode(fileStream, SKEncodedImageFormat.Webp, 100);
+                }
+                else
+                {
+                    //保存原文件
+                    await using var fileStream = new FileStream(filePath, FileMode.Create);
+                    await file.CopyToAsync(fileStream);
+                }
+                
 
                 await response.JsonResponse(200, new ImageResponse
                 {
@@ -87,6 +120,7 @@ namespace ccxc_backend.Controllers.Admin
 
         public class ImagePrepareData
         {
+            public int type { get; set; }
             public string token { get; set; }
         }
     }
