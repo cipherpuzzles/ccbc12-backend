@@ -134,7 +134,7 @@ namespace ccxc_backend.Controllers.Admin
             if (userSession == null) return;
 
             var puzzleDb = DbFactory.Get<Puzzle>();
-            var puzzleList = (await puzzleDb.SelectAllFromCache()).OrderBy(it => it.pgid).ThenBy(it => it.pid);
+            var puzzleList = (await puzzleDb.SelectAllFromCache()).OrderBy(it => it.pgid).ThenBy(it => it.second_key);
 
             await response.JsonResponse(200, new GetPuzzleResponse
             {
