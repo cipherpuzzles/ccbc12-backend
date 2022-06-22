@@ -37,6 +37,7 @@ namespace ccxc_backend.DataServices
             new UserTempProgress(DbConnStr).InitTable();
             new TempPrologueAnswerLog(DbConnStr).InitTable();
             new TempPrologueAnno(DbConnStr).InitTable();
+            new TempExtendData(DbConnStr).InitTable();
         }
     }
 }
