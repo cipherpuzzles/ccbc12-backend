@@ -70,7 +70,7 @@ namespace ccxc_backend.Controllers.Game
                         update_time = now,
                         is_finish = 0,
                         penalty = 0,
-                        power_point = await RedisNumberCenter.GetInt("initial-power-point"), //初始能量点
+                        power_point = await RedisNumberCenter.GetInt("initial_power_point"), //初始能量点
                         power_point_update_time = now,
                         prologue_data = RandomProblem.Init() //生成序章数据
                     };
