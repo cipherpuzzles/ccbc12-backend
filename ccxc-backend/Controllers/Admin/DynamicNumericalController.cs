@@ -102,7 +102,7 @@ namespace ccxc_backend.Controllers.Admin
         [HttpHandler("POST", "/admin/update-power-increase-rate")]
         public async Task UpdatePowerIncreaseRate(Request request, Response response)
         {
-            var userSession = await CheckAuth.Check(request, response, AuthLevel.Organizer);
+            var userSession = await CheckAuth.Check(request, response, AuthLevel.Administrator);
             if (userSession == null) return;
 
             var requestJson = request.Json<DynamicNumerical>();
