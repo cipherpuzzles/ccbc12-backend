@@ -1,4 +1,6 @@
 ﻿using Ccxc.Core.HttpServer;
+using ccxc_backend.DataModels;
+using ccxc_backend.DataServices;
 using ccxc_backend.Functions;
 using System;
 using System.Collections.Generic;
@@ -114,7 +116,16 @@ namespace ccxc_backend.Controllers.Admin
                 return;
             }
 
-            //TODO 增加刷新全员当前能量点的逻辑
+            //刷新全员当前能量点
+            //遍历所有progress，提取所有通过了序章的progress
+            var progressDb = DbFactory.Get<Progress>();
+            var progressList = await progressDb.SimpleDb.AsQueryable().ToListAsync();
+
+            var mainPartList = progressList.Where(it => it.data.IsOpenMainProject);
+            foreach (var progressItem in mainPartList)
+            {
+                await Functions.PowerPoint.PowerPoint.UpdatePowerPoint(progressDb, progressItem.gid, 0);
+            }
 
             //更新能量增速
             await RedisNumberCenter.SetInt("power_increase_rate", requestJson.power_increase_rate);

@@ -319,19 +319,21 @@ namespace ccxc_backend.Functions.PrologueGames
         {
             var answerLetters = answer.ToUpper().Replace(" ", "").ToCharArray();
 
-            var results = new List<List<char>>();
+            var resultA = "";
+            var resultB = "";
             for (int i = 0; i < answerLetters.Length; i++)
             {
-                var k = i % 3;
-                if (results.Count < k + 1)
+                if (i % 2 == 0)
                 {
-                    results.Add(new List<char>());
+                    resultA += answerLetters[i];
                 }
-
-                results[k].Add(answerLetters[i]);
+                else
+                {
+                    resultB += answerLetters[i];
+                }
             }
-            var result = string.Join("", results.Select(x => string.Join("", x)));
-            return (result, 0, "栅栏密码（3栏）");
+            var result = resultA + resultB;
+            return (result, 0, "栅栏密码（2栏）");
         }
 
         public static async Task<string> GetPuzzleContent(int puzzleIndex, string method)

@@ -243,12 +243,12 @@ namespace ccxc_backend.Controllers.Game
                         var puzzleDb = DbFactory.Get<Puzzle>();
                         var puzzleList = await puzzleDb.SelectAllFromCache();
 
-                        var area1 = puzzleList.Where(it => it.pgid == 1).OrderBy(it => it.pid).ToList();
+                        var area1 = puzzleList.Where(it => it.pgid == 1 && it.answer_type == 0).OrderBy(it => it.second_key).ToList();
                         if (area1?.Count <= 0)
                         {
-                            //throw new Exception("区域1题目不存在，初始化失败。");
+                            throw new Exception("区域1题目不存在，初始化失败。");
                         }
-                        var area1ids = area1.Select(it => it.pid).ToList();
+                        var area1ids = area1.Select(it => it.second_key).ToList();
 
                         var now = DateTime.Now;
                         progress.data = new SaveData
