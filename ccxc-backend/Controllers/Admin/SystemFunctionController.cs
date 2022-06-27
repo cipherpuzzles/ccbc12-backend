@@ -77,70 +77,76 @@ namespace ccxc_backend.Controllers.Admin
 
             switch (requestJson.op_key)
             {
-                case "anno":
+                case "anno": //公告
                     {
-                        var db = DbFactory.Get<Announcement>();
-                        await db.InvalidateCache();
+                        var db1 = DbFactory.Get<Announcement>();
+                        var db2 = DbFactory.Get<TempAnno>();
+                        var db3 = DbFactory.Get<TempPrologueAnno>();
+                        await db1.InvalidateCache();
+                        await db2.InvalidateCache();
+                        await db3.InvalidateCache();
                         await response.OK();
                         return;
                     }
-                case "invi":
+                case "invi": //邀请
                     {
                         var db = DbFactory.Get<Invite>();
                         await db.InvalidateCache();
                         await response.OK();
                         return;
                     }
-                case "mess":
+                case "mess": //站内信
                     {
                         var db = DbFactory.Get<Message>();
                         await db.InvalidateCache();
                         await response.OK();
                         return;
                     }
-                case "prog":
+                case "prog": //进度
                     {
                         var db = DbFactory.Get<Progress>();
                         await db.InvalidateCache();
                         await response.OK();
                         return;
                     }
-                case "puzz":
+                case "puzz": //题目
                     {
-                        var db = DbFactory.Get<Puzzle>();
-                        await db.InvalidateCache();
+                        var db1 = DbFactory.Get<Puzzle>();
+                        var db2 = DbFactory.Get<AdditionalAnswer>();
+                        await db1.InvalidateCache();
+                        await db2.InvalidateCache();
                         await response.OK();
                         return;
                     }
-                case "puzg":
+                case "puzg": //题目组
                     {
                         var db = DbFactory.Get<PuzzleGroup>();
                         await db.InvalidateCache();
                         await response.OK();
                         return;
                     }
-                case "user":
+                case "user": //用户
                     {
                         var db = DbFactory.Get<User>();
                         await db.InvalidateCache();
                         await response.OK();
                         return;
                     }
-                case "useg":
+                case "useg": //用户组
                     {
                         var db = DbFactory.Get<UserGroup>();
                         await db.InvalidateCache();
                         await response.OK();
                         return;
                     }
-                case "usgb":
+                case "usgb": //用户绑定
                     {
                         var db = DbFactory.Get<UserGroupBind>();
                         await db.InvalidateCache();
                         await response.OK();
                         return;
                     }
-                case "uall":
+                case "uall": //用户相关全部
                     {
                         var db1 = DbFactory.Get<User>();
                         var db2 = DbFactory.Get<UserGroup>();
@@ -151,26 +157,36 @@ namespace ccxc_backend.Controllers.Admin
                         await response.OK();
                         return;
                     }
-                case "pall":
+                case "pall": //题目相关全部
                     {
                         var db1 = DbFactory.Get<Puzzle>();
                         var db2 = DbFactory.Get<PuzzleGroup>();
+                        var db3 = DbFactory.Get<AdditionalAnswer>();
                         await db1.InvalidateCache();
                         await db2.InvalidateCache();
+                        await db3.InvalidateCache();
                         await response.OK();
                         return;
                     }
-                case "aall":
+                case "aall": //全部
                     {
-                        var db1 = DbFactory.Get<Announcement>();
-                        var db2 = DbFactory.Get<Invite>();
-                        var db3 = DbFactory.Get<Message>();
-                        var db4 = DbFactory.Get<Progress>();
-                        var db5 = DbFactory.Get<Puzzle>();
-                        var db6 = DbFactory.Get<PuzzleGroup>();
-                        var db7 = DbFactory.Get<User>();
-                        var db8 = DbFactory.Get<UserGroup>();
-                        var db9 = DbFactory.Get<UserGroupBind>();
+                        var db1 = DbFactory.Get<AdditionalAnswer>();
+                        var db2 = DbFactory.Get<Announcement>();
+                        var db3 = DbFactory.Get<AnswerLog>();
+                        var db4 = DbFactory.Get<Invite>();
+                        var db5 = DbFactory.Get<LoginLog>();
+                        var db6 = DbFactory.Get<Message>();
+                        var db7 = DbFactory.Get<Progress>();
+                        var db8 = DbFactory.Get<Puzzle>();
+                        var db9 = DbFactory.Get<PuzzleGroup>();
+                        var db10 = DbFactory.Get<TempAnno>();
+                        var db11 = DbFactory.Get<TempExtendData>();
+                        var db12 = DbFactory.Get<TempPrologueAnno>();
+                        var db13 = DbFactory.Get<TempPrologueAnswerLog>();
+                        var db14 = DbFactory.Get<User>();
+                        var db15 = DbFactory.Get<UserGroup>();
+                        var db16 = DbFactory.Get<UserGroupBind>();
+                        var db17 = DbFactory.Get<UserTempProgress>();
                         await db1.InvalidateCache();
                         await db2.InvalidateCache();
                         await db3.InvalidateCache();
@@ -180,6 +196,14 @@ namespace ccxc_backend.Controllers.Admin
                         await db7.InvalidateCache();
                         await db8.InvalidateCache();
                         await db9.InvalidateCache();
+                        await db10.InvalidateCache();
+                        await db11.InvalidateCache();
+                        await db12.InvalidateCache();
+                        await db13.InvalidateCache();
+                        await db14.InvalidateCache();
+                        await db15.InvalidateCache();
+                        await db16.InvalidateCache();
+                        await db17.InvalidateCache();
                         await response.OK();
                         return;
                     }
