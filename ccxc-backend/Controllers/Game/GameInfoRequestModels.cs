@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using ccxc_backend.DataModels;
+using Newtonsoft.Json;
 
 namespace ccxc_backend.Controllers.Game
 {
@@ -31,17 +32,53 @@ namespace ccxc_backend.Controllers.Game
         public string user_name { get; set; }
     }
 
-    public class GetClueMatrixResponse : BasicResponse
+    public class GetYearListResponse : BasicResponse
     {
-        public List<SimplePuzzle> simple_puzzles { get; set; }
+        public List<SimplePuzzleGroup> data { get; set; }
+
+        /// <summary>
+        /// FinalMeta状态 0-未解锁 1-已解锁 2-已完成
+        /// </summary>
+        public int final_meta_type { get; set; }
+        public int power_point { get; set; }
+
+        [JsonConverter(typeof(Ccxc.Core.Utils.ExtensionFunctions.UnixTimestampConverter))]
+        public DateTime power_point_calc_time { get; set; }
+        public int power_point_increase_rate { get; set; }
+        public int time_probe_cost { get; set; }
+    }
+
+    public class SimplePuzzleGroup
+    {
+        public int pgid { get; set; }
+        public string group_name { get; set; }
+        public List<SimplePuzzle> puzzles { get; set; }
+
+        /// <summary>
+        /// Meta状态 0-未解锁 1-已解锁 2-已完成
+        /// </summary>
+        public int meta_type { get; set; }
+        public string meta_name { get; set; }
+        public int unlock_cost { get; set; }
     }
 
     public class SimplePuzzle
     {
-        public int pid { get; set; }
-        public string title { get; set; }
-        public int x { get; set; }
-        public int y { get; set; }
-        public int is_finished { get; set; }
+        public int year { get; set; }
+
+        /// <summary>
+        /// 题目状态 0-未解锁 1-已解锁 2-已完成
+        /// </summary>
+        public int type { get; set; }
+    }
+
+    public class YearProbeRequest
+    {
+        public int year { get; set; }
+    }
+
+    public class YearProbeResponse : BasicResponse
+    {
+        public string extra_message { get; set; }
     }
 }

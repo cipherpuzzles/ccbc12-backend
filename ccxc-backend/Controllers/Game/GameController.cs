@@ -284,75 +284,113 @@ namespace ccxc_backend.Controllers.Game
             });
         }
 
-        [Obsolete("目前没有地方调用此API")]
-        [HttpHandler("POST", "/play/get-clue-matrix")]
+        [HttpHandler("POST", "/play/get-year-list")]
         public async Task GetClueMatrix(Request request, Response response)
         {
-            //var userSession = await CheckAuth.Check(request, response, AuthLevel.Member, true);
-            //if (userSession == null) return;
+            var userSession = await CheckAuth.Check(request, response, AuthLevel.Member, true);
+            if (userSession == null) return;
 
-            ////取得该用户GID
-            //var groupBindDb = DbFactory.Get<UserGroupBind>();
-            //var groupBindList = await groupBindDb.SelectAllFromCache();
+            //取得该用户GID
+            var groupBindDb = DbFactory.Get<UserGroupBind>();
+            var groupBindList = await groupBindDb.SelectAllFromCache();
 
-            //var groupBindItem = groupBindList.FirstOrDefault(it => it.uid == userSession.uid);
-            //if (groupBindItem == null)
-            //{
-            //    await response.BadRequest("未确定组队？");
-            //    return;
-            //}
+            var groupBindItem = groupBindList.FirstOrDefault(it => it.uid == userSession.uid);
+            if (groupBindItem == null)
+            {
+                await response.BadRequest("用户所属队伍不存在。");
+                return;
+            }
+            //组队
+            var gid = groupBindItem.gid;
 
-            //var gid = groupBindItem.gid;
+            //取得进度
+            var progressDb = DbFactory.Get<Progress>();
+            var progress = await progressDb.SimpleDb.AsQueryable().Where(it => it.gid == gid).FirstAsync();
+            if (progress == null)
+            {
+                await response.BadRequest("没有进度，请返回首页重新开始。");
+                return;
+            }
 
-            ////取得进度
-            //var progressDb = DbFactory.Get<Progress>();
-            //var progress = await progressDb.SimpleDb.AsQueryable().Where(it => it.gid == gid).FirstAsync();
-            //if (progress == null)
-            //{
-            //    await response.BadRequest("没有进度，请返回首页重新开始。");
-            //    return;
-            //}
+            var progressData = progress.data;
+            if (progressData == null)
+            {
+                await response.BadRequest("未找到可用存档，请联系管理员。");
+                return;
+            }
 
-            //var progressData = progress.data;
-            //if (progressData == null)
-            //{
-            //    await response.BadRequest("未找到可用存档，请联系管理员。");
-            //    return;
-            //}
+            if (progressData.IsOpenMainProject == false)
+            {
+                await response.BadRequest("请求的部分还未解锁");
+                return;
+            }
 
-            //var cache = DbFactory.GetCache();
-            //var openedGroupKey = cache.GetDataKey("opened-groups");
+            var puzzleGroupDb = DbFactory.Get<PuzzleGroup>();
+            var puzzleGroupList = await puzzleGroupDb.SelectAllFromCache();
+            var resultDataDict = puzzleGroupList.Where(it => it.pgid <= 6).Select(it => new SimplePuzzleGroup
+            {
+                pgid = it.pgid,
+                group_name = it.pg_name,
+                puzzles = new List<SimplePuzzle>()
+            }).ToDictionary(it => it.pgid, it => it);
 
-            //var openedGroup = await cache.Get<int>(openedGroupKey);
-            //if (openedGroup < 1) openedGroup = 1;
+            var puzzleDb = DbFactory.Get<Puzzle>();
+            var puzzleDbList = await puzzleDb.SelectAllFromCache();
+            var puzzleDict = puzzleDbList.ToDictionary(x => x.second_key, x => x);
 
-            //var puzzleDb = DbFactory.Get<Puzzle>();
-            //var avaliablePuzzleList = await puzzleDb.SimpleDb.AsQueryable().Where(it => it.pgid <= openedGroup && it.answer_type == 0).ToListAsync();
+            //取出存档中所有可见题目
+            if (progressData.VisibleProblems?.Count > 0)
+            {
+                foreach (var year in progressData.VisibleProblems)
+                {
+                    if (puzzleDict.ContainsKey(year))
+                    {
+                        var puzzle = puzzleDict[year];
+                        resultDataDict[puzzle.pgid].puzzles.Add(new SimplePuzzle
+                        {
+                            year = year,
+                            type = progressData.FinishedProblems.Contains(year) ? 2 : (progressData.UnlockedProblems.Contains(year) ? 1 : 0)
+                        });
+                    }
+                }
+            }
 
-            //var simpleList = avaliablePuzzleList.Select(it =>
-            //{
-            //    var coord = it.extend_data.Split(",");
-            //    int.TryParse(coord[0], out int x);
-            //    int.TryParse(coord[1], out int y);
+            //对每个分组中的小题排序，并插入Meta完成情况
+            foreach (var (areaKey, areaItem) in resultDataDict)
+            {
+                areaItem.puzzles.Sort((a, b) => a.year.CompareTo(b.year));
+                areaItem.meta_type = progressData.FinishedGroups.Contains(areaKey) ? 2 : (progressData.UnlockedMetaGroups.Contains(areaKey) ? 1 : 0);
+                if (areaItem.meta_type != 0)
+                {
+                    var meta = puzzleDbList.Where(x => x.pgid == areaKey && x.answer_type == 1).FirstOrDefault();
+                    if (meta != null)
+                    {
+                        areaItem.meta_name = meta.title;
+                    }
+                }
+                areaItem.unlock_cost = areaKey switch
+                {
+                    1 => await RedisNumberCenter.GetInt("unlock_puzzle_cost_a"),
+                    2 => await RedisNumberCenter.GetInt("unlock_puzzle_cost_b"),
+                    3 => await RedisNumberCenter.GetInt("unlock_puzzle_cost_c"),
+                    4 => await RedisNumberCenter.GetInt("unlock_puzzle_cost_d"),
+                    5 => await RedisNumberCenter.GetInt("unlock_puzzle_cost_e"),
+                    6 => await RedisNumberCenter.GetInt("unlock_puzzle_cost_f"),
+                    _ => 0,
+                };
+            }
 
-            //    var r = new SimplePuzzle
-            //    {
-            //        pid = it.pid,
-            //        title = it.title,
-            //        x = x,
-            //        y = y,
-            //        is_finished = progressData.FinishedPuzzles.Contains(it.pid) ? 1 : 0
-            //    };
-
-            //    return r;
-            //}).ToList();
-
-            //var res = new GetClueMatrixResponse
-            //{
-            //    status = 1,
-            //    simple_puzzles = simpleList
-            //};
-            //await response.JsonResponse(200, res);
+            var res = new GetYearListResponse
+            {
+                status = 1,
+                data = resultDataDict.Select(it => it.Value).OrderBy(it => it.pgid).ToList(),
+                final_meta_type = progress.is_finish == 1 ? 2 : (progressData.IsOpenFinalPart1 ? 1 : 0),
+                power_point = progress.power_point,
+                power_point_calc_time = progress.power_point_update_time,
+                power_point_increase_rate = await RedisNumberCenter.GetInt("power_increase_rate"),
+                time_probe_cost = await RedisNumberCenter.GetInt("time_probe_cost")
+            };
+            await response.JsonResponse(200, res);
         }
 
         [Obsolete("目前没有地方调用此API")]

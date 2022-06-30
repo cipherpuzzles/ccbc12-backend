@@ -32,6 +32,15 @@ namespace ccxc_backend.Controllers
             });
         }
 
+        public static Task Forbidden(this Response response, string message)
+        {
+            return response.JsonResponse(403, new BasicResponse
+            {
+                status = 2,
+                message = message
+            });
+        }
+
         public static Task Unauthorized(this Response response, string message)
         {
             return response.JsonResponse(401, new BasicResponse

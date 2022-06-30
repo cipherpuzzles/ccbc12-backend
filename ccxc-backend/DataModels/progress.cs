@@ -50,17 +50,17 @@ namespace ccxc_backend.DataModels
         public bool IsOpenMainProject { get; set; } = false;
 
         /// <summary>
-        /// 已完成的题目（pid）
+        /// 已完成的题目（year）
         /// </summary>
         public HashSet<int> FinishedProblems { get; set; } = new HashSet<int>();
 
         /// <summary>
-        /// 已解锁的题目（pid）
+        /// 已解锁的题目（year）
         /// </summary>
         public HashSet<int> UnlockedProblems { get; set; } = new HashSet<int>();
 
         /// <summary>
-        /// 可见的题目（pid）
+        /// 可见的题目（year）
         /// </summary>
         public HashSet<int> VisibleProblems { get; set; } = new HashSet<int>();
 
@@ -75,32 +75,37 @@ namespace ccxc_backend.DataModels
         public bool IsOpenFinalPart2 { get; set; } = false;
 
         /// <summary>
+        /// 已解锁Meta的分组ID（pgid）
+        /// </summary>
+        public HashSet<int> UnlockedMetaGroups { get; set; } = new HashSet<int>();
+
+        /// <summary>
         /// 已完成的分组ID（Meta已解出的分组）（pgid）
         /// </summary>
         public HashSet<int> FinishedGroups { get; set; } = new HashSet<int>();
 
         /// <summary>
-        /// 题目解锁时间（pid -> 解锁时间）
+        /// 题目解锁时间（year -> 解锁时间）
         /// </summary>
         public Dictionary<int, DateTime> ProblemUnlockTime { get; set; } = new Dictionary<int, DateTime>();
 
         /// <summary>
-        /// 题目解锁时耗费的能量（用于完成后返还）（pid -> 能量点数）
+        /// 题目解锁时耗费的能量（用于完成后返还）（year -> 能量点数）
         /// </summary>
         public Dictionary<int, int> ProblemUnlockPowerPoint { get; set; } = new Dictionary<int, int>();
 
         /// <summary>
-        /// 各题目的答案提交次数（pid -> 次数）
+        /// 各题目的答案提交次数（year -> 次数）
         /// </summary>
         public Dictionary<int, int> ProblemAnswerSubmissionsCount { get; set; } = new Dictionary<int, int>();
 
         /// <summary>
-        /// 已兑换过的提示（pid -> (提示id)）
+        /// 已兑换过的提示（year -> (提示id)）
         /// </summary>
         public Dictionary<int, HashSet<int>> OpenedHints { get; set; } = new Dictionary<int, HashSet<int>>();
 
         /// <summary>
-        /// 已解锁的年份（年份（非pid））
+        /// 已解锁的年份（year）
         /// </summary>
         public HashSet<int> UnlockedYears { get; set; } = new HashSet<int>();
 
