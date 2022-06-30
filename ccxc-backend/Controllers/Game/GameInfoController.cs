@@ -170,6 +170,16 @@ namespace ccxc_backend.Controllers.Game
                 extraMessage += "本次探测未消耗能量。";
             }
 
+            var answerLog = new answer_log
+            {
+                create_time = DateTime.Now,
+                uid = userSession.uid,
+                gid = gid,
+                pid = 0,
+                answer = "【探测年份】",
+                status = 8
+            };
+
             //判断待探测年份是否为题目
             var puzzleDb = DbFactory.Get<Puzzle>();
             var puzzleList = await puzzleDb.SelectAllFromCache();
@@ -180,6 +190,8 @@ namespace ccxc_backend.Controllers.Game
 
                 //更新data
                 progress.data.VisibleProblems.Add(requestJson.year);
+                answerLog.pid = requestJson.year;
+                answerLog.answer = "[探测到题目]";
             }
             else
             {
@@ -189,12 +201,20 @@ namespace ccxc_backend.Controllers.Game
                 {
                     message = yearItem.content;
                 }
+                answerLog.answer = $"[探测了 {requestJson.year}]";
             }
 
             progress.data.UnlockedYears.Add(requestJson.year);
 
             //回写存档
             await progressDb.SimpleDb.AsUpdateable(progress).IgnoreColumns(it => new { it.finish_time, it.power_point, it.power_point_update_time }).ExecuteCommandAsync();
+
+            //写入日志
+            if (usePp)
+            {
+                var answerLogDb = DbFactory.Get<AnswerLog>();
+                await answerLogDb.SimpleDb.AsInsertable(answerLog).ExecuteCommandAsync();
+            }
 
             //返回
             await response.JsonResponse(200, new YearProbeResponse

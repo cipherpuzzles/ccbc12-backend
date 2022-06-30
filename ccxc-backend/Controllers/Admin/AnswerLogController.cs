@@ -40,6 +40,7 @@ namespace ccxc_backend.Controllers.Admin
             {
                 pid = it.pid,
                 pgid = it.pgid,
+                second_key = it.second_key,
                 title = it.title
             }).OrderBy(it => it.pgid).ThenBy(it => it.pid).ToList();
 

@@ -61,6 +61,7 @@ namespace ccxc_backend.Controllers.Admin
     {
         public int pid { get; set; }
         public int pgid { get; set; }
+        public int second_key { get; set; }
         public string title { get; set; }
     }
 
