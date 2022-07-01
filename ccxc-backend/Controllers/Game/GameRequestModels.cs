@@ -87,7 +87,7 @@ namespace ccxc_backend.Controllers.Game
 
     public class GetPuzzleDetailRequest
     {
-        public int pid { get; set; }
+        public int year { get; set; }
     }
 
     public class GetPuzzleDetailResponse : BasicResponse
@@ -132,6 +132,7 @@ namespace ccxc_backend.Controllers.Game
         public PuzzleView(puzzle p)
         {
             pid = p.pid;
+            second_key = p.second_key;
             type = p.type;
             title = p.title;
             content = p.content;
@@ -140,6 +141,7 @@ namespace ccxc_backend.Controllers.Game
             answer_type = p.answer_type;
         }
         public int pid { get; set; }
+        public int second_key { get; set; }
         public int type { get; set; }
         public string title { get; set; }
         public string content { get; set; }
