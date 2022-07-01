@@ -81,4 +81,19 @@ namespace ccxc_backend.Controllers.Game
     {
         public string extra_message { get; set; }
     }
+
+    public class ProbedYear
+    {
+        public int year { get; set; }
+
+        /// <summary>
+        /// 0-不是题目 1-是题目
+        /// </summary>
+        public int is_puzzle { get; set; }
+    }
+
+    public class GetProbedYearsListResponse : BasicResponse
+    {
+        public List<ProbedYear> data { get; set; }
+    }
 }
