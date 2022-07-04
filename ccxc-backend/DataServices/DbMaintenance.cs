@@ -27,6 +27,7 @@ namespace ccxc_backend.DataServices
             new Invite(DbConnStr).InitTable();
             new LoginLog(DbConnStr).InitTable();
             new Message(DbConnStr).InitTable();
+            new DataModels.Oracle(DbConnStr).InitTable();
             new Progress(DbConnStr).InitTable();
             new Puzzle(DbConnStr).InitTable();
             new PuzzleGroup(DbConnStr).InitTable();

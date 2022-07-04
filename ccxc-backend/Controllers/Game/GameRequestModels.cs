@@ -1,4 +1,6 @@
-﻿using ccxc_backend.DataModels;
+﻿using Ccxc.Core.Utils.ExtensionFunctions;
+using ccxc_backend.DataModels;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -93,17 +95,29 @@ namespace ccxc_backend.Controllers.Game
     public class GetPuzzleDetailResponse : BasicResponse
     {
         public PuzzleView puzzle { get; set; }
+        public int power_point { get; set; }
+
+        [JsonConverter(typeof(UnixTimestampConverter))]
+        public DateTime power_point_calc_time { get; set; }
+        public int power_point_increase_rate { get; set; }
     }
 
     public class GetPuzzleTipsResponse : BasicResponse
     {
-        public double tips_coin { get; set; }
+        public int is_tip_available { get; set; }
+
+        [JsonConverter(typeof(UnixTimestampConverter))]
+        public DateTime tip_available_time { get; set; }
+        public double tip_available_progress { get; set; }
+        public int unlock_cost { get; set; }
+        public int unlock_delay { get; set; }
         public List<PuzzleTip> puzzle_tips { get; set; }
+        public List<OracleSimpleItem> oracles { get; set; }
     }
 
     public class UnlockPuzzleTipRequest
     {
-        public int pid { get; set; }
+        public int year { get; set; }
         public int tip_num { get; set; }
     }
 
@@ -117,7 +131,6 @@ namespace ccxc_backend.Controllers.Game
         public int tip_num { get; set; }
 
         public string title { get; set; }
-        public int cost { get; set; }
 
         /// <summary>
         /// 0-未解锁 1-已解锁
@@ -125,6 +138,15 @@ namespace ccxc_backend.Controllers.Game
         public int is_open { get; set; }
         public string content { get; set; }
 
+    }
+
+    public class OracleSimpleItem
+    {
+        public int oracle_id { get; set; }
+        public int is_reply { get; set; }
+        
+        [JsonConverter(typeof(UnixTimestampConverter))]
+        public DateTime unlock_time { get; set; }
     }
 
     public class PuzzleView
@@ -156,5 +178,15 @@ namespace ccxc_backend.Controllers.Game
     {
         public string desc { get; set; }
         public int rank_temp { get; set; }
+    }
+
+    public class OpenOracleRequest
+    {
+        public int oracle_id { get; set; }
+    }
+
+    public class OpenOracleResponse : BasicResponse
+    {
+        public oracle data { get; set; }
     }
 }

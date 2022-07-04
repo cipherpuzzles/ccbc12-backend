@@ -129,14 +129,44 @@ namespace ccxc_backend.Controllers.Admin
         public int unlock_meta_tip_cost_f { get; set; }
 
         /// <summary>
-        /// 打开Final-a提示消耗
+        /// 打开Final提示消耗
         /// </summary>
-        public int unlock_final_a_tip_cost { get; set; }
+        public int unlock_final_tip_cost { get; set; }
 
         /// <summary>
-        /// 打开Final-b提示消耗
+        /// 人工提示回复延迟时间（单位：分钟）
         /// </summary>
-        public int unlock_final_b_tip_cost { get; set; }
+        public int manual_tip_reply_delay { get; set; }
+
+        /// <summary>
+        /// 解锁A区Meta最低需要通过的小题数
+        /// </summary>
+        public int unlock_meta_puzzle_a { get; set; }
+
+        /// <summary>
+        /// 解锁B区Meta最低需要通过的小题数
+        /// </summary>
+        public int unlock_meta_puzzle_b { get; set; }
+
+        /// <summary>
+        /// 解锁C区Meta最低需要通过的小题数
+        /// </summary>
+        public int unlock_meta_puzzle_c { get; set; }
+
+        /// <summary>
+        /// 解锁D区Meta最低需要通过的小题数
+        /// </summary>
+        public int unlock_meta_puzzle_d { get; set; }
+
+        /// <summary>
+        /// 解锁E区Meta最低需要通过的小题数
+        /// </summary>
+        public int unlock_meta_puzzle_e { get; set; }
+
+        /// <summary>
+        /// 解锁F区Meta最低需要通过的小题数
+        /// </summary>
+        public int unlock_meta_puzzle_f { get; set; }
     }
 
     public class GetDynamicNumericalResponse : BasicResponse

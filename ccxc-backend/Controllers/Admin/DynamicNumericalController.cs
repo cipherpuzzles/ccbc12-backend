@@ -34,6 +34,7 @@ namespace ccxc_backend.Controllers.Admin
                 try_answer_cost = await RedisNumberCenter.GetInt("try_answer_cost"),
                 try_meta_answer_cost = await RedisNumberCenter.GetInt("try_meta_answer_cost"),
                 unlock_tip_function_after = await RedisNumberCenter.GetInt("unlock_tip_function_after"),
+                manual_tip_reply_delay = await RedisNumberCenter.GetInt("manual_tip_reply_delay"),
                 unlock_tip_cost_a = await RedisNumberCenter.GetInt("unlock_tip_cost_a"),
                 unlock_tip_cost_b = await RedisNumberCenter.GetInt("unlock_tip_cost_b"),
                 unlock_tip_cost_c = await RedisNumberCenter.GetInt("unlock_tip_cost_c"),
@@ -46,8 +47,13 @@ namespace ccxc_backend.Controllers.Admin
                 unlock_meta_tip_cost_d = await RedisNumberCenter.GetInt("unlock_meta_tip_cost_d"),
                 unlock_meta_tip_cost_e = await RedisNumberCenter.GetInt("unlock_meta_tip_cost_e"),
                 unlock_meta_tip_cost_f = await RedisNumberCenter.GetInt("unlock_meta_tip_cost_f"),
-                unlock_final_a_tip_cost = await RedisNumberCenter.GetInt("unlock_final_a_tip_cost"),
-                unlock_final_b_tip_cost = await RedisNumberCenter.GetInt("unlock_final_b_tip_cost"),
+                unlock_final_tip_cost = await RedisNumberCenter.GetInt("unlock_final_tip_cost"),
+                unlock_meta_puzzle_a = await RedisNumberCenter.GetInt("unlock_meta_puzzle_a"),
+                unlock_meta_puzzle_b = await RedisNumberCenter.GetInt("unlock_meta_puzzle_b"),
+                unlock_meta_puzzle_c = await RedisNumberCenter.GetInt("unlock_meta_puzzle_c"),
+                unlock_meta_puzzle_d = await RedisNumberCenter.GetInt("unlock_meta_puzzle_d"),
+                unlock_meta_puzzle_e = await RedisNumberCenter.GetInt("unlock_meta_puzzle_e"),
+                unlock_meta_puzzle_f = await RedisNumberCenter.GetInt("unlock_meta_puzzle_f"),
             };
 
             await response.JsonResponse(200, new GetDynamicNumericalResponse
@@ -83,6 +89,7 @@ namespace ccxc_backend.Controllers.Admin
             await RedisNumberCenter.SetInt("try_answer_cost", requestJson.try_answer_cost);
             await RedisNumberCenter.SetInt("try_meta_answer_cost", requestJson.try_meta_answer_cost);
             await RedisNumberCenter.SetInt("unlock_tip_function_after", requestJson.unlock_tip_function_after);
+            await RedisNumberCenter.SetInt("manual_tip_reply_delay", requestJson.manual_tip_reply_delay);
             await RedisNumberCenter.SetInt("unlock_tip_cost_a", requestJson.unlock_tip_cost_a);
             await RedisNumberCenter.SetInt("unlock_tip_cost_b", requestJson.unlock_tip_cost_b);
             await RedisNumberCenter.SetInt("unlock_tip_cost_c", requestJson.unlock_tip_cost_c);
@@ -95,8 +102,13 @@ namespace ccxc_backend.Controllers.Admin
             await RedisNumberCenter.SetInt("unlock_meta_tip_cost_d", requestJson.unlock_meta_tip_cost_d);
             await RedisNumberCenter.SetInt("unlock_meta_tip_cost_e", requestJson.unlock_meta_tip_cost_e);
             await RedisNumberCenter.SetInt("unlock_meta_tip_cost_f", requestJson.unlock_meta_tip_cost_f);
-            await RedisNumberCenter.SetInt("unlock_final_a_tip_cost", requestJson.unlock_final_a_tip_cost);
-            await RedisNumberCenter.SetInt("unlock_final_b_tip_cost", requestJson.unlock_final_b_tip_cost);
+            await RedisNumberCenter.SetInt("unlock_final_tip_cost", requestJson.unlock_final_tip_cost);
+            await RedisNumberCenter.SetInt("unlock_meta_puzzle_a", requestJson.unlock_meta_puzzle_a);
+            await RedisNumberCenter.SetInt("unlock_meta_puzzle_b", requestJson.unlock_meta_puzzle_b);
+            await RedisNumberCenter.SetInt("unlock_meta_puzzle_c", requestJson.unlock_meta_puzzle_c);
+            await RedisNumberCenter.SetInt("unlock_meta_puzzle_d", requestJson.unlock_meta_puzzle_d);
+            await RedisNumberCenter.SetInt("unlock_meta_puzzle_e", requestJson.unlock_meta_puzzle_e);
+            await RedisNumberCenter.SetInt("unlock_meta_puzzle_f", requestJson.unlock_meta_puzzle_f);
 
             await response.OK();
         }
