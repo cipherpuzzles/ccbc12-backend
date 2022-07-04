@@ -40,6 +40,10 @@ namespace ccxc_backend.DataModels
 
         [DbColumn(ColumnDescription = "回复内容", ColumnDataType = "TEXT", IsNullable = true)]
         public string reply_content { get; set; }
+
+        [JsonConverter(typeof(UnixTimestampConverter))]
+        [DbColumn(IsIgnore = true)]
+        public DateTime unlock_time { get; set; }
     }
 
     public class Oracle : MysqlClient<oracle>

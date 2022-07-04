@@ -1317,6 +1317,15 @@ namespace ccxc_backend.Controllers.Game
                 return;
             }
 
+            //时间未到开放时间，则不返回回复内容
+            var unlockDelay = await RedisNumberCenter.GetInt("manual_tip_reply_delay");
+            var unlockTime = oracleItem.create_time.AddMinutes(unlockDelay);
+            oracleItem.unlock_time = unlockTime;
+            if (DateTime.Now < unlockTime)
+            {
+                oracleItem.reply_content = "";
+            }
+
             await response.JsonResponse(200, new OpenOracleResponse
             {
                 status = 1,
