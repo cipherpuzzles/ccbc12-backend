@@ -189,4 +189,10 @@ namespace ccxc_backend.Controllers.Game
     {
         public oracle data { get; set; }
     }
+
+    public class EditOracleRequest
+    {
+        public int oracle_id { get; set; }
+        public string question_content { get; set; }
+    }
 }

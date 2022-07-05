@@ -1332,5 +1332,75 @@ namespace ccxc_backend.Controllers.Game
                 data = oracleItem
             });
         }
+
+        [HttpHandler("POST", "/play/edit-oracle")]
+        public async Task EditOracle(Request request, Response response)
+        {
+            var userSession = await CheckAuth.Check(request, response, AuthLevel.Member, true);
+            if (userSession == null) return;
+
+            var requestJson = request.Json<EditOracleRequest>();
+
+            //判断请求是否有效
+            if (!Validation.Valid(requestJson, out string reason))
+            {
+                await response.BadRequest(reason);
+                return;
+            }
+
+            //取得该用户GID
+            var groupBindDb = DbFactory.Get<UserGroupBind>();
+            var groupBindList = await groupBindDb.SelectAllFromCache();
+
+            var groupBindItem = groupBindList.FirstOrDefault(it => it.uid == userSession.uid);
+            if (groupBindItem == null)
+            {
+                await response.BadRequest("未确定组队？");
+                return;
+            }
+
+            var gid = groupBindItem.gid;
+
+            //取得进度
+            var progressDb = DbFactory.Get<Progress>();
+            var progress = await progressDb.SimpleDb.AsQueryable().Where(it => it.gid == gid).FirstAsync();
+            if (progress == null)
+            {
+                await response.BadRequest("没有进度，请返回首页重新开始。");
+                return;
+            }
+
+            var progressData = progress.data;
+            if (progressData == null)
+            {
+                await response.BadRequest("未找到可用存档，请联系管理员。");
+                return;
+            }
+
+            if (progressData.IsOpenMainProject == false)
+            {
+                await response.BadRequest("请求的部分还未解锁");
+                return;
+            }
+
+            var oracleDb = DbFactory.Get<DataModels.Oracle>();
+            var oracleItem = await oracleDb.SimpleDb.AsQueryable().Where(x => x.gid == gid && x.oracle_id == requestJson.oracle_id).FirstAsync();
+            if (oracleItem == null)
+            {
+                await response.BadRequest("未找到该Oracle");
+                return;
+            }
+
+            //执行更新
+            oracleItem.question_content = requestJson.question_content;
+            oracleItem.update_time = DateTime.Now;
+            await oracleDb.SimpleDb.AsUpdateable(oracleItem).UpdateColumns(x => new { x.question_content, x.update_time }).ExecuteCommandAsync();
+
+            await response.JsonResponse(200, new OpenOracleResponse
+            {
+                status = 1,
+                data = oracleItem
+            });
+        }        
     }
 }
