@@ -41,6 +41,9 @@ namespace ccxc_backend.DataModels
         [DbColumn(ColumnDescription = "回复内容", ColumnDataType = "TEXT", IsNullable = true)]
         public string reply_content { get; set; }
 
+        [DbColumn(ColumnDescription = "扩展功能（自动打开已有提示用）", IsNullable = true)]
+        public string extend_function { get; set; }
+
         [JsonConverter(typeof(UnixTimestampConverter))]
         [DbColumn(IsIgnore = true)]
         public DateTime unlock_time { get; set; }

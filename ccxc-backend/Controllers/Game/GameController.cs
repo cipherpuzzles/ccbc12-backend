@@ -1324,6 +1324,34 @@ namespace ccxc_backend.Controllers.Game
             if (DateTime.Now < unlockTime)
             {
                 oracleItem.reply_content = "";
+                oracleItem.extend_function = "";
+            }
+            else
+            {
+                //开放回复内容，此时可能同时有一些提示被后台手工打开，给它设置提示
+                if (!string.IsNullOrEmpty(oracleItem.extend_function))
+                {
+                    var openTips = oracleItem.extend_function.Split(',').Select(it => int.Parse(it)).ToList();
+                    var changed = false;
+                    foreach (var tip in openTips)
+                    {
+                        if (!progress.data.OpenedHints.ContainsKey(oracleItem.pid))
+                        {
+                            progress.data.OpenedHints[oracleItem.pid] = new HashSet<int>();
+                        }
+                        if (!progress.data.OpenedHints[oracleItem.pid].Contains(tip))
+                        {
+                            progress.data.OpenedHints[oracleItem.pid].Add(tip);
+                            changed = true;
+                        }
+                    }
+
+                    //如果有更新，则回写存档
+                    if (changed)
+                    {
+                        await progressDb.SimpleDb.AsUpdateable(progress).IgnoreColumns(x => new { x.finish_time, x.power_point, x.power_point_update_time }).ExecuteCommandAsync();
+                    }
+                }
             }
 
             await response.JsonResponse(200, new OpenOracleResponse
