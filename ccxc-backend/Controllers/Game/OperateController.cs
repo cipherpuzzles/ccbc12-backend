@@ -1,6 +1,8 @@
 ﻿using Ccxc.Core.HttpServer;
 using ccxc_backend.DataModels;
 using ccxc_backend.DataServices;
+using ccxc_backend.Functions;
+using ccxc_backend.Functions.PowerPoint;
 using Newtonsoft.Json;
 using SqlSugar;
 using System;
@@ -35,7 +37,7 @@ namespace ccxc_backend.Controllers.Game
             {
                 create_time = DateTime.Now,
                 uid = userSession.uid,
-                pid = requestJson.pid,
+                pid = requestJson.year,
                 answer = requestJson.answer
             };
 
@@ -57,12 +59,6 @@ namespace ccxc_backend.Controllers.Game
 
             var gid = groupBindItem.gid;
             answerLog.gid = gid;
-
-            //取得队伍名称
-            var groupDb = DbFactory.Get<UserGroup>();
-            var groupList = await groupDb.SelectAllFromCache();
-
-            var groupItem = groupList.FirstOrDefault(it => it.gid == gid);
 
             //取得进度
             var progressDb = DbFactory.Get<Progress>();
@@ -86,145 +82,213 @@ namespace ccxc_backend.Controllers.Game
                 return;
             }
 
+            if (progressData.IsOpenMainProject == false)
+            {
+                await response.BadRequest("请求的部分还未解锁");
+                return;
+            }
+
             //取出待判定题目
             var puzzleDb = DbFactory.Get<Puzzle>();
             var puzzleList = await puzzleDb.SelectAllFromCache();
 
-            ////1. 判定是否可以激活隐藏题目
-            ////取出隐藏关键字
-            //var jumpKeyWords = puzzleList.Where(it => !string.IsNullOrEmpty(it.jump_keyword))
-            //    .GroupBy(it => it.jump_keyword.ToLower().Replace(" ", ""))
-            //    .ToDictionary(it => it.Key, it => it.First());
-
-            //if (jumpKeyWords.ContainsKey(answer))
-            //{
-            //    var jumpTarget = jumpKeyWords[answer];
-
-            //    answerLog.status = 6;
-            //    await answerLogDb.SimpleDb.AsInsertable(answerLog).ExecuteCommandAsync();
-
-            //    //回写存档
-            //    progress.data.OpenedHidePuzzles.Add(jumpTarget.pid);
-            //    await progressDb.SimpleDb.AsUpdateable(progress).IgnoreColumns(it => new { it.finish_time }).ExecuteCommandAsync();
-
-            //    //返回
-            //    await response.JsonResponse(200, new AnswerResponse
-            //    {
-            //        status = 3,
-            //        answer_status = 6,
-            //        message = "好像发现了什么奇妙空间。",
-            //        location = $"/clue/{jumpTarget.pid}"
-            //    });
-            //    return;
-            //}
-
-            ////2. 判定题目可见性
-            //var puzzleItem = puzzleList.Where(it => it.pid == requestJson.pid).First();
-
-            //if (puzzleItem == null)
-            //{
-            //    answerLog.status = 4;
-            //    await answerLogDb.SimpleDb.AsInsertable(answerLog).ExecuteCommandAsync();
-
-            //    await response.BadRequest("题目不存在或未解锁。");
-            //    return;
-            //}
-
-            
-            ////取得普通小题已经打开的区域（1~3）
-            //var cache = DbFactory.GetCache();
-            //var openedGroupKey = cache.GetDataKey("opened-groups");
-            //var openedGroup = await cache.Get<int>(openedGroupKey);
-
-            ////prefinal需存档可见
-            //if (puzzleItem.pgid == 4)
-            //{
-            //    if (!progressData.IsOpenPreFinal)
-            //    {
-            //        answerLog.status = 4;
-            //        await answerLogDb.SimpleDb.AsInsertable(answerLog).ExecuteCommandAsync();
-
-            //        await response.BadRequest("题目不存在或未解锁。");
-            //        return;
-            //    }
-            //}
-            ////final区域需存档可见
-            //else if (puzzleItem.pgid == 5)
-            //{
-            //    if (!progressData.IsOpenFinalStage)
-            //    {
-            //        answerLog.status = 4;
-            //        await answerLogDb.SimpleDb.AsInsertable(answerLog).ExecuteCommandAsync();
-
-            //        await response.BadRequest("题目不存在或未解锁。");
-            //        return;
-            //    }
-            //}
-            ////非prefinal或final区域：需判定题目组已开放或者题目本身作为隐藏题目开放
-            //else if (puzzleItem.pgid > openedGroup && !progressData.OpenedHidePuzzles.Contains(puzzleItem.pid))
-            //{
-            //    answerLog.status = 4;
-            //    await answerLogDb.SimpleDb.AsInsertable(answerLog).ExecuteCommandAsync();
-
-            //    await response.BadRequest("题目不存在或未解锁。");
-            //    return;
-            //}
-
-            ////取得最后一次错误答题记录
-            //var lastWrongTime = DateTime.MinValue;
-            //var lastWrongAnswer = await answerLogDb.SimpleDb.AsQueryable().Where(it => it.gid == gid && it.status != 1 && it.status != 3 && it.status != 6 && it.status != 7)
-            //    .OrderBy(it => it.create_time, OrderByType.Desc).FirstAsync();
-
-            //if(lastWrongAnswer != null)
-            //{
-            //    lastWrongTime = lastWrongAnswer.create_time;
-            //}
-
-            ////判断是否在冷却时间内
-            //var coolTime = (DateTime.Now - lastWrongTime).TotalSeconds;
-            //if(coolTime <= Config.Config.Options.CooldownTime)
-            //{
-            //    var remainTime = Config.Config.Options.CooldownTime - coolTime;
-            //    answerLog.status = 3;
-            //    await answerLogDb.SimpleDb.AsInsertable(answerLog).ExecuteCommandAsync();
-
-            //    await response.JsonResponse(406, new AnswerResponse //使用 406 Not Acceptable 作为答案错误的专用返回码。若返回 200 OK 则为答案正确
-            //    {
-            //        status = 1,
-            //        answer_status = 3,
-            //        message = $"冷却中，还有 {remainTime:F0} 秒",
-            //        cooldown_remain_seconds = remainTime
-            //    });
-            //    return;
-            //}
-
-            ////判断答案是否正确
-            //var trueAnswer = puzzleItem.answer.ToLower().Replace(" ", "");
-            //if (!string.Equals(trueAnswer, answer, StringComparison.CurrentCultureIgnoreCase))
-            //{
-            //    //答案错误，判断是否存在附加提示
-            //    var addAnswerDb = DbFactory.Get<AdditionalAnswer>();
-            //    var addAnswerListAll = await addAnswerDb.SelectAllFromCache();
-            //    var addAnswerDict = addAnswerListAll.Where(x => x.pid == puzzleItem.pid).ToDictionary(x => x.answer.ToLower().Replace(" ", ""), x => x.message);
-
-            //    var message = "答案错误";
-            //    if (addAnswerDict.ContainsKey(answer))
-            //    {
-            //        message = $"答案错误，但是获得了一些信息：{addAnswerDict[answer]}";
-            //    }
+            /**
+             * 判题流程
+             * 1. 判断题目是否可见
+             *   -- 不可见 -> 返回错误提示（注销登录并跳转回首页）
+             *   -- 可见 -> 下一步
+             * 2. 判断剩余能量是否足够（先判断是否是Meta，由于Meta消耗能量和小题不同）
+             *   -- 不够 -> 返回能量不足提示
+             *   -- 足够 -> 下一步
+             * 3. 判断答案是否正确
+             *   -- 不正确 -> {
+             *      3.1. 判断是否为FinalMeta（FinalMeta有两重答案）
+             *        -- 是FinalMeta -> {
+             *           3.1.1. 判断是否和附加提示答案相同
+             *             -- 是 -> 第二段FinalMeta标记为开，返回值标记刷新当前页，然后返回。
+             *             -- 否 -> 扣减能量，返回答案错误。
+             *           }
+             *        -- 不是FinalMeta -> {
+             *           3.1.2. 扣减能量
+             *           3.1.3. 判断是否存在附加提示
+             *             -- 存在 -> 返回答案错误+附加提示
+             *             -- 不存在 -> 返回答案错误
+             *           }
+             *      }
+             *   -- 正确 -> 下一步
+             * 4. 判断该题是否为初次回答正确
+             *   -- 不是初次回答正确 -> 返回回答正确
+             *   -- 初次回答正确 -> 标记此题回答正确，然后下一步
+             * 5. 判断是否为首杀
+             *   -- 是首杀 -> 写入首杀数据库，然后下一步
+             *   -- 不是首杀 -> 下一步
+             * 6. 判断是否为FinalMeta
+             *   -- 是FinalMeta -> {
+             *      6.1. 判断是否已经完赛
+             *        -- 已经完赛 -> 标记跳转到finalend，然后返回
+             *        -- 未完赛 -> 标记完赛，然后标记跳转到finalend，然后返回
+             *      }
+             *   -- 不是 -> 下一步
+             * 7. 判断是否为区域Meta
+             *   -- 是区域Meta -> {
+             *      7.1. 找出同区域所有题目，如果未解锁，将其标注为解锁
+             *      7.2. 标记该区域完成
+             *      7.3. 判断是否6个区域Meta都完成
+             *        -- 是 -> 第一段FinalMeta标记为开，然后跳转到12
+             *        -- 否 -> 跳转到12
+             *      }
+             *   -- 不是 -> 下一步
+             * 8. 判断已答正确题数是否足够解锁该区Meta
+             *   -- 足够 -> 标记本区域Meta解锁，然后下一步
+             *   -- 不够 -> 下一步
+             * 9. 检查本区域题目中是否全部可见
+             *   -- 没有全部可见 -> 按顺序标记下一题可见，然后下一步
+             *   -- 已全部可见 -> 下一步
+             * 10. 检查下一区域是否全部可见
+             *   -- 没有下一区域 -> 下一步
+             *   -- 没有全部可见 -> 按顺序标记下一区域的下一题可见，然后下一步
+             *   -- 已全部可见 -> 下一步
+             * 11. 检查是否有需要返还的能量
+             *   -- 有能量 -> 将能量返还，然后将存档中的记录设置为0，然后下一步
+             *   -- 没有能量 -> 下一步
+             * 12. 检查是否当前题目有扩展内容
+             *   -- 有扩展内容 -> 返回标记刷新当前页
+             *   -- 没有扩展内容 -> 返回
+             */
 
 
-            //    answerLog.status = 2;
-            //    await answerLogDb.SimpleDb.AsInsertable(answerLog).ExecuteCommandAsync();
+            //1. 判定题目可见性
+            var puzzleItem = puzzleList.Where(it => it.second_key == requestJson.year).FirstOrDefault();
 
-            //    await response.JsonResponse(406, new AnswerResponse //使用 406 Not Acceptable 作为答案错误的专用返回码。若返回 200 OK 则为答案正确
-            //    {
-            //        status = 1,
-            //        answer_status = 2,
-            //        message = message
-            //    });
-            //    return;
-            //}
+            if (puzzleItem == null)
+            {
+                answerLog.status = 4;
+                await answerLogDb.SimpleDb.AsInsertable(answerLog).ExecuteCommandAsync();
+
+                await response.BadRequest("题目不存在或未解锁。");
+                return;
+            }
+
+            //题目组需要是1~6或是7
+            if (puzzleItem.pgid < 1 || puzzleItem.pgid > 7)
+            {
+                answerLog.status = 4;
+                await answerLogDb.SimpleDb.AsInsertable(answerLog).ExecuteCommandAsync();
+
+                await response.BadRequest("题目不存在或未解锁。");
+                return;
+            }
+
+            //检查是否为FinalMeta、小Meta
+            int wrongAnswerCost;
+            if (puzzleItem.answer_type == 3)
+            {
+                //FinalMeta需要已解锁
+                if (!progressData.IsOpenFinalPart1)
+                {
+                    answerLog.status = 4;
+                    await answerLogDb.SimpleDb.AsInsertable(answerLog).ExecuteCommandAsync();
+
+                    await response.BadRequest("题目不存在或未解锁。");
+                    return;
+                }
+
+                wrongAnswerCost = await RedisNumberCenter.GetInt("try_meta_answer_cost");
+            }
+            else if (puzzleItem.answer_type == 1)
+            {
+                //小Meta需要对应分组开放
+                if (!progressData.UnlockedMetaGroups.Contains(puzzleItem.pgid))
+                {
+                    answerLog.status = 4;
+                    await answerLogDb.SimpleDb.AsInsertable(answerLog).ExecuteCommandAsync();
+
+                    await response.BadRequest("题目不存在或未解锁。");
+                    return;
+                }
+
+                wrongAnswerCost = await RedisNumberCenter.GetInt("try_meta_answer_cost");
+            }
+            else
+            {
+                //小题需要已解锁
+                if (!progressData.UnlockedProblems.Contains(puzzleItem.second_key))
+                {
+                    answerLog.status = 4;
+                    await answerLogDb.SimpleDb.AsInsertable(answerLog).ExecuteCommandAsync();
+
+                    await response.BadRequest("题目不存在或未解锁。");
+                    return;
+                }
+
+                wrongAnswerCost = await RedisNumberCenter.GetInt("try_answer_cost");
+            }
+
+            //2. 判断能量是否足够
+            var currentPp = await PowerPoint.GetPowerPoint(progressDb, gid);
+            if (currentPp < wrongAnswerCost)
+            {
+                answerLog.status = 3;
+                await answerLogDb.SimpleDb.AsInsertable(answerLog).ExecuteCommandAsync();
+
+                await response.BadRequest("能量点不足。");
+                return;
+            }
+
+            //3. 判断答案是否正确
+            var trueAnswer = puzzleItem.answer.ToLower().Replace(" ", "");
+            if (!string.Equals(trueAnswer, answer, StringComparison.CurrentCultureIgnoreCase))
+            {
+                //答案错误，判断是否存在附加提示
+                var addAnswerDb = DbFactory.Get<AdditionalAnswer>();
+                var addAnswerListAll = await addAnswerDb.SelectAllFromCache();
+                var addAnswerDict = addAnswerListAll.Where(x => x.pid == puzzleItem.pid).ToDictionary(x => x.answer.ToLower().Replace(" ", ""), x => x.message);
+
+                var message = "答案错误";
+                var extendFlag = 0;
+
+                if (puzzleItem.answer_type == 3)
+                {
+                    //FinalMeta，但是符合附加提示时打开第二部分提示
+                    if (addAnswerDict.ContainsKey(answer))
+                    {
+                        message = $"答案错误，但是获得了一些信息：{addAnswerDict[answer]}";
+
+                        progress.data.IsOpenFinalPart2 = true;
+                        await progressDb.SimpleDb.AsUpdateable(progress).IgnoreColumns(it => new { it.finish_time, it.power_point, it.power_point_update_time }).ExecuteCommandAsync();
+                        
+                        extendFlag = 16;
+                    }
+                    else
+                    {
+                        //扣减能量
+                        await PowerPoint.UpdatePowerPoint(progressDb, gid, -wrongAnswerCost);
+                    }
+                }
+                else
+                {
+                    //扣减能量
+                    await PowerPoint.UpdatePowerPoint(progressDb, gid, -wrongAnswerCost);
+                    if (addAnswerDict.ContainsKey(answer))
+                    {
+                        message = $"答案错误，但是获得了一些信息：{addAnswerDict[answer]}";
+                    }
+                }
+
+
+
+                answerLog.status = 2;
+                await answerLogDb.SimpleDb.AsInsertable(answerLog).ExecuteCommandAsync();
+
+                await response.JsonResponse(406, new AnswerResponse //使用 406 Not Acceptable 作为答案错误的专用返回码。若返回 200 OK 则为答案正确
+                {
+                    status = 1,
+                    answer_status = 2,
+                    message = message,
+                    extend_flag = extendFlag
+                });
+                return;
+            }
 
             ////答案正确
             //answerLog.status = 1;

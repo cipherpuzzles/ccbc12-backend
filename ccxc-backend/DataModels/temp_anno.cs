@@ -13,17 +13,11 @@ namespace ccxc_backend.DataModels
         public int pid { get; set; }
 
         [JsonConverter(typeof(UnixTimestampConverter))]
-        [DbColumn(ColumnDescription = "创建时间", ColumnDataType = "DATETIME", Length = 6, DefaultValue = "0000-00-00 00:00:00.000000")]
-        public DateTime create_time { get; set; }
+        [DbColumn(ColumnDescription = "首杀时间", ColumnDataType = "DATETIME", Length = 6, DefaultValue = "0000-00-00 00:00:00.000000")]
+        public DateTime first_solve_time { get; set; }
 
-        [DbColumn(ColumnDescription = "公告内容", ColumnDataType = "TEXT", IsNullable = true)]
-        public string content { get; set; }
-
-        [DbColumn(ColumnDescription = "公告是否已发布（0-未发布 1-已发布）")]
-        public byte is_pub { get; set; }
-
-        [DbColumn(IsIgnore = true)]
-        public string puzzle_name { get; set; }
+        [DbColumn(ColumnDescription = "首杀组队GID")]
+        public int first_solver_gid { get; set; }
     }
 
     public class TempAnno : MysqlClient<temp_anno>
