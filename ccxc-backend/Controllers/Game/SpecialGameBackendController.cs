@@ -101,7 +101,7 @@ namespace ccxc_backend.Controllers.Game
             var userSession = await CheckAuth.Check(request, response, AuthLevel.Normal, true);
             if (userSession == null) return;
 
-            var requestJson = request.Json<CheckAnswerRequest>();
+            var requestJson = request.Json<PrologueCheckAnswerRequest>();
 
             //判断请求是否有效
             if (!Validation.Valid(requestJson, out string reason))
