@@ -487,6 +487,15 @@ namespace ccxc_backend.Controllers.Game
                 isFinished = progressData.FinishedProblems.Contains(puzzleItem.second_key);
             }
 
+            //获取当前用户的投票情况
+            var voteDb = DbFactory.Get<PuzzleVote>();
+            var voteItem = await voteDb.SimpleDb.AsQueryable().Where(x => x.uid == userSession.uid && x.pid == puzzleItem.second_key).FirstAsync();
+            var voteResult = 0;
+            if (voteItem != null)
+            {
+                voteResult = voteItem.vote;
+            }
+
             var res = new GetPuzzleDetailResponse
             {
                 status = 1,
@@ -498,6 +507,7 @@ namespace ccxc_backend.Controllers.Game
                 power_point = progress.power_point,
                 power_point_calc_time = progress.power_point_update_time,
                 power_point_increase_rate = await RedisNumberCenter.GetInt("power_increase_rate"),
+                vote_type = voteResult
             };
 
             await response.JsonResponse(200, res);
@@ -1324,7 +1334,6 @@ namespace ccxc_backend.Controllers.Game
             if (DateTime.Now < unlockTime)
             {
                 oracleItem.reply_content = "";
-                oracleItem.extend_function = "";
             }
             else
             {
@@ -1429,6 +1438,118 @@ namespace ccxc_backend.Controllers.Game
                 status = 1,
                 data = oracleItem
             });
-        }        
+        }
+
+        [HttpHandler("POST", "/play/puzzle-vote")]
+        public async Task PuzzleVote(Request request, Response response)
+        {
+            var userSession = await CheckAuth.Check(request, response, AuthLevel.Member, true);
+            if (userSession == null) return;
+
+            var requestJson = request.Json<PuzzleVoteRequest>();
+
+            //判断请求是否有效
+            if (!Validation.Valid(requestJson, out string reason))
+            {
+                await response.BadRequest(reason);
+                return;
+            }
+
+            //取得该用户GID
+            var groupBindDb = DbFactory.Get<UserGroupBind>();
+            var groupBindList = await groupBindDb.SelectAllFromCache();
+
+            var groupBindItem = groupBindList.FirstOrDefault(it => it.uid == userSession.uid);
+            if (groupBindItem == null)
+            {
+                await response.BadRequest("未确定组队？");
+                return;
+            }
+
+            var gid = groupBindItem.gid;
+
+            //取得进度
+            var progressDb = DbFactory.Get<Progress>();
+            var progress = await progressDb.SimpleDb.AsQueryable().Where(it => it.gid == gid).FirstAsync();
+            if (progress == null)
+            {
+                await response.BadRequest("没有进度，请返回首页重新开始。");
+                return;
+            }
+
+            var progressData = progress.data;
+            if (progressData == null)
+            {
+                await response.BadRequest("未找到可用存档，请联系管理员。");
+                return;
+            }
+
+            if (progressData.IsOpenMainProject == false)
+            {
+                await response.BadRequest("请求的部分还未解锁");
+                return;
+            }
+
+            //取得题目详情
+            var puzzleDb = DbFactory.Get<Puzzle>();
+            var puzzleItem = (await puzzleDb.SelectAllFromCache()).FirstOrDefault(it => it.second_key == requestJson.year);
+            if (puzzleItem == null)
+            {
+                await response.Unauthorized("不能访问您未打开的区域");
+                return;
+            }
+
+            //检查是否可见
+            //题目组需要是1~6或是7
+            if (puzzleItem.pgid < 1 || puzzleItem.pgid > 7)
+            {
+                await response.Unauthorized("不能访问您未打开的区域");
+                return;
+            }
+
+            //检查是否为FinalMeta、小Meta
+            if (puzzleItem.answer_type == 3)
+            {
+                //FinalMeta需要已解锁
+                if (!progressData.IsOpenFinalPart1)
+                {
+                    await response.Unauthorized("不能访问您未打开的区域");
+                    return;
+                }
+            }
+            else if (puzzleItem.answer_type == 1)
+            {
+                //小Meta需要对应分组开放
+                if (!progressData.UnlockedMetaGroups.Contains(puzzleItem.pgid))
+                {
+                    await response.Unauthorized("不能访问您未打开的区域");
+                    return;
+                }
+            }
+            else
+            {
+                //小题需要已解锁
+                if (!progressData.UnlockedProblems.Contains(puzzleItem.second_key))
+                {
+                    await response.Unauthorized("不能访问您未打开的区域");
+                    return;
+                }
+            }
+
+            //记录或更新结果
+            var voteDb = DbFactory.Get<PuzzleVote>();
+            var voteItem = new puzzle_vote
+            {
+                uid = userSession.uid,
+                pid = requestJson.year,
+                vote = requestJson.vote_type,
+            };
+            var voteStorage = voteDb.Db.Storageable(voteItem).ToStorage();
+            await voteStorage.AsUpdateable.ExecuteCommandAsync();
+            await voteStorage.AsInsertable.ExecuteCommandAsync();
+
+            //返回
+            await response.OK();
+        }
     }
 }

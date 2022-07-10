@@ -100,6 +100,7 @@ namespace ccxc_backend.Controllers.Game
         [JsonConverter(typeof(UnixTimestampConverter))]
         public DateTime power_point_calc_time { get; set; }
         public int power_point_increase_rate { get; set; }
+        public int vote_type { get; set; }
     }
 
     public class GetPuzzleTipsResponse : BasicResponse
@@ -194,5 +195,11 @@ namespace ccxc_backend.Controllers.Game
     {
         public int oracle_id { get; set; }
         public string question_content { get; set; }
+    }
+
+    public class PuzzleVoteRequest
+    {
+        public int year { get; set; }
+        public int vote_type { get; set; }
     }
 }
