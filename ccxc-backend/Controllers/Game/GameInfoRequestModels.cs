@@ -96,4 +96,31 @@ namespace ccxc_backend.Controllers.Game
     {
         public List<ProbedYear> data { get; set; }
     }
+
+    public class GetPuzzleBoardRequest
+    {
+        /// <summary>
+        /// 0-按首杀时间排序 1-按解答队伍多少排序 2-按点赞数排序 3-按点踩数排序
+        /// </summary>
+        public int type { get; set; }
+    }
+
+    public class GetPuzzleBoardResponse : BasicResponse
+    {
+        [JsonConverter(typeof(Ccxc.Core.Utils.ExtensionFunctions.UnixTimestampConverter))]
+        public DateTime cache_time { get; set; }
+        public List<PuzzleBoardItem> data { get; set; }
+    }
+
+    public class PuzzleBoardItem
+    {
+        public string title { get; set; }
+        public string first_solve_group_name { get; set; }
+
+        [JsonConverter(typeof(Ccxc.Core.Utils.ExtensionFunctions.UnixTimestampConverter))]
+        public DateTime first_solve_time { get; set; }
+        public int solved_group_count { get; set; }
+        public int like_count { get; set; }
+        public int dislike_count { get; set; }
+    }
 }

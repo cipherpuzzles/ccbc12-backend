@@ -396,5 +396,166 @@ namespace ccxc_backend.Controllers.Game
             //返回
             await response.OK();
         }
+
+        [HttpHandler("POST", "/play/get-puzzle-board")]
+        public async Task GetPuzzleBoard(Request request, Response response)
+        {
+            var userSession = await CheckAuth.Check(request, response, AuthLevel.Member, true);
+            if (userSession == null) return;
+
+            var requestJson = request.Json<GetPuzzleBoardRequest>();
+
+            //判断请求是否有效
+            if (!Validation.Valid(requestJson, out string reason))
+            {
+                await response.BadRequest(reason);
+                return;
+            }
+
+            //取得该用户GID
+            var groupBindDb = DbFactory.Get<UserGroupBind>();
+            var groupBindList = await groupBindDb.SelectAllFromCache();
+
+            var groupBindItem = groupBindList.FirstOrDefault(it => it.uid == userSession.uid);
+            if (groupBindItem == null)
+            {
+                await response.BadRequest("用户所属队伍不存在。");
+                return;
+            }
+            //组队
+            var gid = groupBindItem.gid;
+
+            //取得进度
+            var progressDb = DbFactory.Get<Progress>();
+            var progress = await progressDb.SimpleDb.AsQueryable().Where(it => it.gid == gid).FirstAsync();
+            if (progress == null)
+            {
+                await response.BadRequest("没有进度，请返回首页重新开始。");
+                return;
+            }
+
+            var progressData = progress.data;
+            if (progressData == null)
+            {
+                await response.BadRequest("未找到可用存档，请联系管理员。");
+                return;
+            }
+
+            if (progressData.IsOpenMainProject == false)
+            {
+                await response.BadRequest("请求的部分还未解锁");
+                return;
+            }
+
+            //查询Redis缓存
+            var now = DateTime.Now;
+            var cache = DbFactory.GetCache();
+
+            var puzzleBoardKey = cache.GetCacheKey($"puzzle_board_cache_{requestJson.type}");
+            var cacheData = await cache.Client.GetObject<GetPuzzleBoardResponse>(puzzleBoardKey);
+            if (cacheData != null && cacheData.cache_time > now.AddMinutes(-1))
+            {
+                await response.JsonResponse(200, cacheData);
+                return;
+            }
+
+            //无缓存或缓存过期，重新加载数据
+            var puzzleDb = DbFactory.Get<Puzzle>();
+            var puzzleTitleDict = (await puzzleDb.SelectAllFromCache()).ToDictionary(it => it.second_key, it => it.title);
+
+            var userGroupDb = DbFactory.Get<UserGroup>();
+            var userNameDict = (await userGroupDb.SelectAllFromCache()).ToDictionary(it => it.gid, it => it.groupname);
+
+            //各队题目解答数
+            var progressList = await progressDb.SimpleDb.AsQueryable().ToListAsync();
+            var puzzleSolveCountDict = new Dictionary<int, int>();
+            foreach (var groupProgress in progressList)
+            {
+                var groupProgressData = groupProgress.data;
+                if (groupProgressData == null) continue;
+                if (groupProgressData.IsOpenMainProject == false) continue;
+                if (groupProgressData.FinishedProblems?.Count > 0)
+                {
+                    foreach (var year in groupProgressData.FinishedProblems)
+                    {
+                        if (!puzzleSolveCountDict.ContainsKey(year))
+                        {
+                            puzzleSolveCountDict[year] = 0;
+                        }
+                        puzzleSolveCountDict[year]++;
+                    }
+                }
+            }
+
+            //统计赞踩数据
+            var puzzleVoteDb = DbFactory.Get<PuzzleVote>();
+            var puzzleVoteList = await puzzleVoteDb.SimpleDb.AsQueryable().ToListAsync();
+            var likeVoteDict = puzzleVoteList.Where(it => it.vote == 1).GroupBy(it => it.pid).ToDictionary(it => it.Key, it => it.Count());
+            var dislikeVoteDict = puzzleVoteList.Where(it => it.vote == 2).GroupBy(it => it.pid).ToDictionary(it => it.Key, it => it.Count());
+
+            var annoDb = DbFactory.Get<TempAnno>();
+            var annoList = await annoDb.SimpleDb.AsQueryable().ToListAsync();
+
+            var resultList = new List<PuzzleBoardItem>();
+            foreach (var anno in annoList)
+            {
+                var year = anno.pid;
+                var puzzleTitle = "";
+                if (puzzleTitleDict.ContainsKey(year))
+                {
+                    puzzleTitle = puzzleTitleDict[year];
+                }
+
+                var firstSolverGid = anno.first_solver_gid;
+                var firstSolverGroupName = "";
+                if (userNameDict.ContainsKey(firstSolverGid))
+                {
+                    firstSolverGroupName = userNameDict[firstSolverGid];
+                }
+
+                var r = new PuzzleBoardItem
+                {
+                    title = puzzleTitle,
+                    first_solve_group_name = firstSolverGroupName,
+                    first_solve_time = anno.first_solve_time,
+                    solved_group_count = puzzleSolveCountDict.ContainsKey(year) ? puzzleSolveCountDict[year] : 0,
+                    like_count = likeVoteDict.ContainsKey(year) ? likeVoteDict[year] : 0,
+                    dislike_count = dislikeVoteDict.ContainsKey(year) ? dislikeVoteDict[year] : 0
+                };
+
+                resultList.Add(r);
+            }
+
+            //根据请求排序
+            if (requestJson.type == 0)
+            {
+                resultList = resultList.OrderBy(it => it.first_solve_time).ToList();
+            }
+            else if (requestJson.type == 1)
+            {
+                resultList = resultList.OrderByDescending(it => it.solved_group_count).ThenBy(it => it.first_solve_time).ToList();
+            }
+            else if (requestJson.type == 2)
+            {
+                resultList = resultList.OrderByDescending(it => it.like_count).ThenBy(it => it.dislike_count).ThenByDescending(it => it.solved_group_count).ThenBy(it => it.first_solve_time).ToList();
+            }
+            else
+            {
+                resultList = resultList.OrderByDescending(it => it.dislike_count).ThenBy(it => it.like_count).ThenByDescending(it => it.solved_group_count).ThenBy(it => it.first_solve_time).ToList();
+            }
+
+            var res = new GetPuzzleBoardResponse
+            {
+                status = 1,
+                cache_time = DateTime.Now,
+                data = resultList
+            };
+
+            //存入缓存
+            await cache.Client.PutObject(puzzleBoardKey, res, 65000);
+
+            //返回
+            await response.JsonResponse(200, res);
+        }
     }
 }
