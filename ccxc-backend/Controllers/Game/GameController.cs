@@ -10,6 +10,7 @@ using System.ComponentModel.Composition;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace ccxc_backend.Controllers.Game
@@ -513,173 +514,110 @@ namespace ccxc_backend.Controllers.Game
             await response.JsonResponse(200, res);
         }
 
-        [Obsolete("目前没有地方调用此API")]
-        [HttpHandler("POST", "/play/get-meta-list")]
-        public async Task GetMetaList(Request request, Response response)
+        [HttpHandler("POST", "/play/get-meta-detail")]
+        public async Task GetMetaDetail(Request request, Response response)
         {
-            //var userSession = await CheckAuth.Check(request, response, AuthLevel.Member, true);
-            //if (userSession == null) return;
+            var userSession = await CheckAuth.Check(request, response, AuthLevel.Member, true);
+            if (userSession == null) return;
 
-            ////取得该用户GID
-            //var groupBindDb = DbFactory.Get<UserGroupBind>();
-            //var groupBindList = await groupBindDb.SelectAllFromCache();
+            //取得该用户GID
+            var groupBindDb = DbFactory.Get<UserGroupBind>();
+            var groupBindList = await groupBindDb.SelectAllFromCache();
 
-            //var groupBindItem = groupBindList.FirstOrDefault(it => it.uid == userSession.uid);
-            //if (groupBindItem == null)
-            //{
-            //    await response.BadRequest("未确定组队？");
-            //    return;
-            //}
+            var groupBindItem = groupBindList.FirstOrDefault(it => it.uid == userSession.uid);
+            if (groupBindItem == null)
+            {
+                await response.BadRequest("未确定组队？");
+                return;
+            }
 
-            //var gid = groupBindItem.gid;
+            var gid = groupBindItem.gid;
 
-            ////取得进度
-            //var progressDb = DbFactory.Get<Progress>();
-            //var progress = await progressDb.SimpleDb.AsQueryable().Where(it => it.gid == gid).FirstAsync();
-            //if (progress == null)
-            //{
-            //    await response.BadRequest("没有进度，请返回首页重新开始。");
-            //    return;
-            //}
+            //取得进度
+            var progressDb = DbFactory.Get<Progress>();
+            var progress = await progressDb.SimpleDb.AsQueryable().Where(it => it.gid == gid).FirstAsync();
+            if (progress == null)
+            {
+                await response.BadRequest("没有进度，请返回首页重新开始。");
+                return;
+            }
 
-            //var progressData = progress.data;
-            //if (progressData == null)
-            //{
-            //    await response.BadRequest("未找到可用存档，请联系管理员。");
-            //    return;
-            //}
+            var progressData = progress.data;
+            if (progressData == null)
+            {
+                await response.BadRequest("未找到可用存档，请联系管理员。");
+                return;
+            }
 
-            //var cache = DbFactory.GetCache();
-            //var openedGroupKey = cache.GetDataKey("opened-groups");
+            if (progressData.IsOpenMainProject == false)
+            {
+                await response.BadRequest("请求的部分还未解锁");
+                return;
+            }
 
-            //var openedGroup = await cache.Get<int>(openedGroupKey);
-            //if (openedGroup < 1) openedGroup = 1;
+            //取得FinalMeta题目详情
+            var puzzleDb = DbFactory.Get<Puzzle>();
+            var puzzleItem = (await puzzleDb.SelectAllFromCache()).FirstOrDefault(it => it.answer_type == 3);
+            if (puzzleItem == null)
+            {
+                await response.Unauthorized("不能访问您未打开的区域");
+                return;
+            }
 
-            //var puzzleDb = DbFactory.Get<Puzzle>();
-            //var avaliablePuzzleList = await puzzleDb.SimpleDb.AsQueryable().Where(it => it.pgid <= openedGroup && it.answer_type == 1).ToListAsync();
+            var isFinished = progress.is_finish == 1;
 
+            var finalMetaHtml = puzzleItem.html;
+            var regexPart1 = new Regex(@"<script id=""final-part1"" type=""text/plain"">[\r\n]*?([\s\S\r\n]+?)[\r\n]*?</script>");
+            var part1Content = regexPart1.Match(finalMetaHtml).Groups[1].Value;
 
-            //if (progressData.IsOpenPreFinal)
-            //{
-            //    var addList = await puzzleDb.SimpleDb.AsQueryable().Where(it => it.pgid == 4).ToListAsync();
-            //    avaliablePuzzleList.AddRange(addList);
-            //}
+            //Console.WriteLine($"DEBUG1=======\n{part1Content}");
+            
+            var regexPart2 = new Regex(@"<script id=""final-part2"" type=""text/plain"">[\r\n]*?([\s\S\r\n]+?)[\r\n]*?</script>");
+            var part2Content = regexPart2.Match(finalMetaHtml).Groups[1].Value;
 
-            //if (progressData.IsOpenFinalStage)
-            //{
-            //    var addList = await puzzleDb.SimpleDb.AsQueryable().Where(it => it.pgid == 5).ToListAsync();
-            //    avaliablePuzzleList.AddRange(addList);
-            //}
+            //Console.WriteLine($"DEBUG2=======\n{part2Content}");
 
+            //获取当前用户的投票情况
+            var voteDb = DbFactory.Get<PuzzleVote>();
+            var voteItem = await voteDb.SimpleDb.AsQueryable().Where(x => x.uid == userSession.uid && x.pid == puzzleItem.second_key).FirstAsync();
+            var voteResult = 0;
+            if (voteItem != null)
+            {
+                voteResult = voteItem.vote;
+            }
 
-            //var simpleList = avaliablePuzzleList.Select(it =>
-            //{
-            //    var sectionType = 0;
-            //    if (it.answer_type == 2 || it.answer_type == 3)
-            //    {
-            //        sectionType = 1;
-            //    }
-            //    if (it.pgid == 4)
-            //    {
-            //        sectionType = 1;
-            //    }
+            var resultPuzzle = new PuzzleView
+            {
+                pid = puzzleItem.pid,
+                second_key = puzzleItem.second_key,
+                type = puzzleItem.type,
+                title = puzzleItem.title,
+                content = puzzleItem.content,
+                answer_type = puzzleItem.answer_type,
+                extend_content = isFinished ? puzzleItem.extend_content : "",
+                is_finish = isFinished ? 1 : 0
+            };
 
-            //    var r = new SimplePuzzle
-            //    {
-            //        pid = it.pid,
-            //        title = it.title,
-            //        x = sectionType,
-            //        is_finished = progressData.FinishedPuzzles.Contains(it.pid) ? 1 : 0
-            //    };
+            if (progressData.IsOpenFinalPart1)
+            {
+                resultPuzzle.html = part1Content;
+            }
+            if (progressData.IsOpenFinalPart2)
+            {
+                resultPuzzle.image = part2Content;
+            }
 
-            //    return r;
-            //}).ToList();
+            var res = new GetPuzzleDetailResponse
+            {
+                status = 1,
+                puzzle = resultPuzzle,
+                power_point = progress.power_point,
+                power_point_calc_time = progress.power_point_update_time,
+                power_point_increase_rate = await RedisNumberCenter.GetInt("power_increase_rate"),
+                vote_type = voteResult
+            };
 
-            //var res = new GetClueMatrixResponse
-            //{
-            //    status = 1,
-            //    simple_puzzles = simpleList
-            //};
-            //await response.JsonResponse(200, res);
-        }
-
-        [HttpHandler("POST", "/play/get-final-info")]
-        public async Task GetFinalInfo(Request request, Response response)
-        {
-            //var userSession = await CheckAuth.Check(request, response, AuthLevel.Member, true);
-            //if (userSession == null) return;
-
-            //var requestJson = request.Json<GetPuzzleDetailRequest>();
-
-            ////判断请求是否有效
-            //if (!Validation.Valid(requestJson, out string reason))
-            //{
-            //    await response.BadRequest(reason);
-            //    return;
-            //}
-
-            ////取得该用户GID
-            //var groupBindDb = DbFactory.Get<UserGroupBind>();
-            //var groupBindList = await groupBindDb.SelectAllFromCache();
-
-            //var groupBindItem = groupBindList.FirstOrDefault(it => it.uid == userSession.uid);
-            //if (groupBindItem == null)
-            //{
-            //    await response.BadRequest("未确定组队？");
-            //    return;
-            //}
-
-            //var gid = groupBindItem.gid;
-
-            ////取得进度
-            //var progressDb = DbFactory.Get<Progress>();
-            //var progress = await progressDb.SimpleDb.AsQueryable().Where(it => it.gid == gid).FirstAsync();
-            //if (progress == null)
-            //{
-            //    await response.BadRequest("没有进度，请返回首页重新开始。");
-            //    return;
-            //}
-
-            //var progressData = progress.data;
-            //if (progressData == null)
-            //{
-            //    await response.BadRequest("未找到可用存档，请联系管理员。");
-            //    return;
-            //}
-
-            ////取得Final题目
-            //var puzzleDb = DbFactory.Get<Puzzle>();
-            //var puzzleItem = (await puzzleDb.SelectAllFromCache()).First(it => it.answer_type == 3);
-
-            //var finalInfo = "";
-            //var rankTemp = 0;
-
-            //if (puzzleItem != null)
-            //{
-            //    //确定该队已完成Final
-            //    if (progressData.FinishedPuzzles.Contains(puzzleItem.pid))
-            //    {
-            //        var progressList = await progressDb.SimpleDb.AsQueryable().Where(x => x.is_finish == 1).OrderBy(x => x.finish_time, SqlSugar.OrderByType.Asc).ToListAsync();
-            //        rankTemp = progressList.FindIndex(it => it.gid == gid) + 1;
-
-
-            //        //题目组信息
-            //        var puzzleGroupDb = DbFactory.Get<PuzzleGroup>();
-            //        var finalGroup = (await puzzleGroupDb.SelectAllFromCache()).First(it => it.pgid == puzzleItem.pgid);
-
-            //        if (finalGroup != null)
-            //        {
-            //            finalInfo = finalGroup.pg_desc;
-            //        }
-            //    }
-            //}
-
-            //await response.JsonResponse(200, new GetFinalInfoResponse
-            //{
-            //    status = 1,
-            //    desc = finalInfo,
-            //    rank_temp = rankTemp
-            //});
+            await response.JsonResponse(200, res);
         }
 
         [HttpHandler("POST", "/play/get-tips")]

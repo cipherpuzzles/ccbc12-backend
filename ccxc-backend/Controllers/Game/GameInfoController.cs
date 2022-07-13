@@ -557,5 +557,78 @@ namespace ccxc_backend.Controllers.Game
             //返回
             await response.JsonResponse(200, res);
         }
+
+        [HttpHandler("POST", "/play/get-final-end")]
+        public async Task GetFinalEnd(Request request, Response response)
+        {
+            var userSession = await CheckAuth.Check(request, response, AuthLevel.Member, true);
+            if (userSession == null) return;
+
+            //取得该用户GID
+            var groupBindDb = DbFactory.Get<UserGroupBind>();
+            var groupBindList = await groupBindDb.SelectAllFromCache();
+            
+            var groupBindItem = groupBindList.FirstOrDefault(it => it.uid == userSession.uid);
+            if (groupBindItem == null)
+            {
+                await response.BadRequest("用户所属队伍不存在。");
+                return;
+            }
+            //组队
+            var gid = groupBindItem.gid;
+
+            //取得进度
+            var progressDb = DbFactory.Get<Progress>();
+            var progress = await progressDb.SimpleDb.AsQueryable().Where(it => it.gid == gid).FirstAsync();
+            if (progress == null)
+            {
+                await response.BadRequest("没有进度，请返回首页重新开始。");
+                return;
+            }
+
+            var progressData = progress.data;
+            if (progressData == null)
+            {
+                await response.BadRequest("未找到可用存档，请联系管理员。");
+                return;
+            }
+
+            if (progressData.IsOpenMainProject == false)
+            {
+                await response.BadRequest("请求的部分还未解锁");
+                return;
+            }
+
+            //确定该队已经完成Final
+            var rankTemp = 0;
+            var finalEnd = "";
+            if (progress.is_finish == 1)
+            {
+                var progressList = await progressDb.SimpleDb.AsQueryable().Where(x => x.is_finish == 1).OrderBy(x => x.finish_time, OrderByType.Asc).ToListAsync();
+                rankTemp = progressList.FindIndex(it => it.gid == gid) + 1;
+
+                //判断是否已完成全部6个Meta
+                var finalEndKeys = "final-bad-end";
+                if (progressData.FinishedGroups.Count >= 6)
+                {
+                    finalEndKeys = "final-true-end";
+                }
+
+                var groupDb = DbFactory.Get<PuzzleGroup>();
+                var finalGroup = (await groupDb.SelectAllFromCache()).FirstOrDefault(it => it.pg_name == finalEndKeys);
+
+                if (finalGroup != null)
+                {
+                    finalEnd = finalGroup.pg_desc;
+                }
+            }
+
+            await response.JsonResponse(200, new GetFinalEndResponse
+            {
+                status = 1,
+                message = finalEnd,
+                rank_temp = rankTemp
+            });
+        }
     }
 }

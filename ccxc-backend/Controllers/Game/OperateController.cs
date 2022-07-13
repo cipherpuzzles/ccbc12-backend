@@ -42,7 +42,7 @@ namespace ccxc_backend.Controllers.Game
                 answer = requestJson.answer
             };
 
-            var answer = requestJson.answer.ToLower().Replace(" ", "");
+            var answer = requestJson.answer.ToLower().Replace(" ", "").Replace("-", "");
 
             //取得该用户GID
             var groupBindDb = DbFactory.Get<UserGroupBind>();
@@ -240,7 +240,7 @@ namespace ccxc_backend.Controllers.Game
 
             //3. 判断答案是否正确
             var extendFlag = 0;
-            var trueAnswer = puzzleItem.answer.ToLower().Replace(" ", "");
+            var trueAnswer = puzzleItem.answer.ToLower().Replace(" ", "").Replace("-", "");
             if (!string.Equals(trueAnswer, answer, StringComparison.CurrentCultureIgnoreCase))
             {
                 //答案错误，判断是否存在附加提示

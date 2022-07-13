@@ -123,4 +123,9 @@ namespace ccxc_backend.Controllers.Game
         public int like_count { get; set; }
         public int dislike_count { get; set; }
     }
+
+    public class GetFinalEndResponse : BasicResponse
+    {
+        public int rank_temp { get; set; }
+    }
 }

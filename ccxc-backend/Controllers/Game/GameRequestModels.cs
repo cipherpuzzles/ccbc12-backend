@@ -152,6 +152,10 @@ namespace ccxc_backend.Controllers.Game
 
     public class PuzzleView
     {
+        public PuzzleView()
+        {
+            
+        }
         public PuzzleView(puzzle p)
         {
             pid = p.pid;
@@ -173,12 +177,6 @@ namespace ccxc_backend.Controllers.Game
         public int answer_type { get; set; }
         public string extend_content { get; set; }
         public int is_finish { get; set; }
-    }
-
-    public class GetFinalInfoResponse : BasicResponse
-    {
-        public string desc { get; set; }
-        public int rank_temp { get; set; }
     }
 
     public class OpenOracleRequest
