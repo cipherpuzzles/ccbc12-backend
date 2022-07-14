@@ -600,11 +600,11 @@ namespace ccxc_backend.Controllers.Game
 
             if (progressData.IsOpenFinalPart1)
             {
-                resultPuzzle.html = part1Content;
+                resultPuzzle.html = part1Content.Replace("{{userName}}", userSession.username);
             }
             if (progressData.IsOpenFinalPart2)
             {
-                resultPuzzle.image = part2Content;
+                resultPuzzle.image = part2Content.Replace("{{userName}}", userSession.username);
             }
 
             var res = new GetPuzzleDetailResponse
@@ -681,6 +681,7 @@ namespace ccxc_backend.Controllers.Game
             }
 
             int unlockTipCost; //解锁提示消耗
+            var unlockDelay = await RedisNumberCenter.GetInt("manual_tip_reply_delay");
 
             //检查是否可见
             //题目组需要是1~6或是7
@@ -693,14 +694,37 @@ namespace ccxc_backend.Controllers.Game
             //检查是否为FinalMeta、小Meta
             if (puzzleItem.answer_type == 3)
             {
-                //FinalMeta需要已解锁
+                unlockTipCost = await RedisNumberCenter.GetInt("unlock_final_tip_cost");
+
+                //FinalMeta未解锁，返回空白结果
                 if (!progressData.IsOpenFinalPart1)
                 {
-                    await response.Unauthorized("不能访问您未打开的区域");
-                    return;
+                    var finalRes = new GetPuzzleTipsResponse
+                    {
+                        status = 1,
+                        is_tip_available = 0,
+                        tip_available_time = new DateTime(2222, 2, 22, 22, 22, 22),
+                        tip_available_progress = 0,
+                        unlock_cost = unlockTipCost,
+                        unlock_delay = unlockDelay,
+                        puzzle_tips = new List<PuzzleTip>(),
+                        oracles = null
+                    };
+
+                    await response.JsonResponse(200, finalRes);
                 }
 
-                unlockTipCost = await RedisNumberCenter.GetInt("unlock_final_tip_cost");
+                if (progressData.IsOpenFinalPart2)
+                {
+                    //将puzzleItem替换为part2占位符
+                    puzzleItem = (await puzzleDb.SelectAllFromCache()).FirstOrDefault(it => it.second_key == 10000000);
+
+                    if (puzzleItem == null)
+                    {
+                        await response.Unauthorized("怪了");
+                        return;
+                    }
+                }
             }
             else if (puzzleItem.answer_type == 1)
             {
@@ -812,8 +836,7 @@ namespace ccxc_backend.Controllers.Game
 
             //提取人工提示信息
             var oracleDb = DbFactory.Get<DataModels.Oracle>();
-            var oracleList = await oracleDb.SimpleDb.AsQueryable().Where(x => x.gid == gid && x.pid == puzzleItem.second_key).OrderBy(x => x.create_time).ToListAsync();
-            var unlockDelay = await RedisNumberCenter.GetInt("manual_tip_reply_delay");
+            var oracleList = await oracleDb.SimpleDb.AsQueryable().Where(x => x.gid == gid && x.pid == requestJson.year).OrderBy(x => x.create_time).ToListAsync();
 
             var oracleItem = oracleList.Select(it => new OracleSimpleItem
             {
@@ -915,6 +938,8 @@ namespace ccxc_backend.Controllers.Game
             //检查是否为FinalMeta、小Meta
             if (puzzleItem.answer_type == 3)
             {
+                unlockTipCost = await RedisNumberCenter.GetInt("unlock_final_tip_cost");
+
                 //FinalMeta需要已解锁
                 if (!progressData.IsOpenFinalPart1)
                 {
@@ -922,7 +947,17 @@ namespace ccxc_backend.Controllers.Game
                     return;
                 }
 
-                unlockTipCost = await RedisNumberCenter.GetInt("unlock_final_tip_cost");
+                if (progressData.IsOpenFinalPart2)
+                {
+                    //将puzzleItem替换为part2占位符
+                    puzzleItem = (await puzzleDb.SelectAllFromCache()).FirstOrDefault(it => it.second_key == 10000000);
+
+                    if (puzzleItem == null)
+                    {
+                        await response.Unauthorized("怪了");
+                        return;
+                    }
+                }
             }
             else if (puzzleItem.answer_type == 1)
             {
@@ -987,9 +1022,9 @@ namespace ccxc_backend.Controllers.Game
 
             //判断能量是否足够提取并扣减能量
             var isHintOpened = false;
-            if (progressData.OpenedHints.ContainsKey(requestJson.year))
+            if (progressData.OpenedHints.ContainsKey(puzzleItem.second_key))
             {
-                var openedHint = progressData.OpenedHints[requestJson.year];
+                var openedHint = progressData.OpenedHints[puzzleItem.second_key];
                 if (openedHint.Contains(requestJson.tip_num)) {
                     isHintOpened = true;
                 }
@@ -1012,11 +1047,11 @@ namespace ccxc_backend.Controllers.Game
             await PowerPoint.UpdatePowerPoint(progressDb, gid, -unlockTipCost);
 
             //记录指定提示为open状态
-            if (!progress.data.OpenedHints.ContainsKey(requestJson.year))
+            if (!progress.data.OpenedHints.ContainsKey(puzzleItem.second_key))
             {
-                progress.data.OpenedHints.Add(requestJson.year, new HashSet<int>());
+                progress.data.OpenedHints.Add(puzzleItem.second_key, new HashSet<int>());
             }
-            progress.data.OpenedHints[requestJson.year].Add(requestJson.tip_num);
+            progress.data.OpenedHints[puzzleItem.second_key].Add(requestJson.tip_num);
 
 
             //写入日志
@@ -1026,7 +1061,7 @@ namespace ccxc_backend.Controllers.Game
                 create_time = DateTime.Now,
                 uid = userSession.uid,
                 gid = gid,
-                pid = requestJson.year,
+                pid = puzzleItem.second_key,
                 answer = $"[解锁提示 {requestJson.tip_num}]",
                 status = 7
             };

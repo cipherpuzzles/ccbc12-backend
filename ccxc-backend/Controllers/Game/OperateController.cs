@@ -258,6 +258,7 @@ namespace ccxc_backend.Controllers.Game
                         message = $"答案错误，但是获得了一些信息：{addAnswerDict[answer]}";
 
                         progress.data.IsOpenFinalPart2 = true;
+                        progress.data.ProblemUnlockTime[10000000] = now; //part 2提示解锁
                         await progressDb.SimpleDb.AsUpdateable(progress).IgnoreColumns(it => new { it.finish_time, it.power_point, it.power_point_update_time }).ExecuteCommandAsync();
                         
                         extendFlag = 16;
@@ -382,7 +383,7 @@ namespace ccxc_backend.Controllers.Game
                         {
                             progress.data.IsOpenFinalPart1 = true;
                             progress.data.ProblemUnlockTime[9999999] = now;
-                            successMessage += "，机房大门后面传来了什么声音，时光机面板好像松了";
+                            successMessage += "，时光机面板上的螺丝好像松了";
                         }
                     }
                 }
