@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Ccxc.Core.HttpServer;
 using ccxc_backend.DataModels;
 using ccxc_backend.DataServices;
+using ccxc_backend.Functions;
 
 namespace ccxc_backend.Controllers.Admin
 {
@@ -149,35 +150,48 @@ namespace ccxc_backend.Controllers.Admin
             var groupDb = DbFactory.Get<UserGroup>();
             var groupList = await groupDb.SelectAllFromCache();
 
+            var groupBindDb = DbFactory.Get<UserGroupBind>();
+            var groupBindList = await groupBindDb.SelectAllFromCache();
+            var groupBindCountDict = groupBindList.GroupBy(it => it.gid).ToDictionary(it => it.Key, it => it.Count());
+
             var progressDb = DbFactory.Get<Progress>();
             var progressList = await progressDb.SimpleDb.AsQueryable().ToListAsync();
             var progressDict = progressList.ToDictionary(it => it.gid, it => it);
+
+            var ppRate = await RedisNumberCenter.GetInt("power_increase_rate");
 
             var resList = groupList.Select(it =>
             {
                 var r = new GetGroupOverview
                 {
                     gid = it.gid,
-                    create_time = it.create_time,
                     groupname = it.groupname,
-                    profile = it.profile
+                    profile = it.profile,
+                    create_time = it.create_time,
                 };
+
+                if (groupBindCountDict.ContainsKey(it.gid))
+                {
+                    r.member_count = groupBindCountDict[it.gid];
+                }
 
                 if (progressDict.ContainsKey(it.gid))
                 {
                     var progress = progressDict[it.gid];
+                    r.is_finish_prologue = progress.data.IsOpenMainProject ? 1 : 0;
+                    r.prologue_progress = progress.prologue_data.CurrentProblem - 1;
+
+                    r.finished_group_count = progress.data.FinishedGroups.Count();
                     r.finished_puzzle_count = progress.data.FinishedProblems.Count();
-                    r.score = progress.score;
+
+                    r.unlock_year_count = progress.data.UnlockedYears.Count();
+                    r.unlock_puzzle_count = progress.data.UnlockedProblems.Count();
+                    r.visible_puzzle_count = progress.data.VisibleProblems.Count();
+
                     r.is_finish = progress.is_finish;
                     r.finish_time = progress.finish_time;
-                    r.penalty = progress.penalty;
 
-                    if (r.is_finish == 1)
-                    {
-                        r.total_time =
-                            (progress.finish_time -
-                             Ccxc.Core.Utils.UnixTimestamp.FromTimestamp(Config.Config.Options.StartTime)).TotalHours;
-                    }
+                    r.power_point = progress.power_point + ppRate * (int)Math.Floor((DateTime.Now - progress.power_point_update_time).TotalMinutes);
                 }
 
                 return r;
@@ -190,7 +204,8 @@ namespace ccxc_backend.Controllers.Admin
             }
             else
             {
-                res = resList.OrderByDescending(it => it.score).ToList();
+                res = resList.OrderByDescending(it => it.is_finish).ThenBy(it => it.finish_time).ThenByDescending(it => it.finished_group_count).ThenByDescending(it => it.finished_puzzle_count)
+                    .ThenByDescending(it => it.is_finish_prologue).ThenByDescending(it => it.prologue_progress).ToList();
             }
 
             await response.JsonResponse(200, new GetGroupOverviewResponse
@@ -211,6 +226,7 @@ namespace ccxc_backend.Controllers.Admin
             {
                 pid = it.pid,
                 pgid = it.pgid,
+                second_key = it.second_key,
                 title = it.title
             }).OrderBy(it => it.pgid).ThenBy(it => it.pid).ToList();
 

@@ -37,20 +37,25 @@ namespace ccxc_backend.Controllers.Admin
     {
         public int gid { get; set; }
         public string groupname { get; set; }
-
+        public string profile { get; set; }
         [JsonConverter(typeof(UnixTimestampConverter))]
         public DateTime create_time { get; set; }
 
-        public string profile { get; set; }
-        public int finished_puzzle_count { get; set; }
-        public double score { get; set; }
-        public int is_finish { get; set; }
+        public int member_count { get; set; }
 
+        public int is_finish_prologue { get; set; }
+        public int prologue_progress { get; set; }
+        
+        public int finished_group_count { get; set; }
+        public int finished_puzzle_count { get; set; }
+        public int unlock_year_count { get; set; }
+        public int unlock_puzzle_count { get; set; }
+        public int visible_puzzle_count { get; set; }
+        
+        public int power_point { get; set; }
+        public int is_finish { get; set; }
         [JsonConverter(typeof(UnixTimestampConverter))]
         public DateTime finish_time { get; set; }
-
-        public double penalty { get; set; }
-        public double total_time { get; set; }
     }
 
     public class GetGroupRequest
