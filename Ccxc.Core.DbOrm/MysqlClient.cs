@@ -106,7 +106,7 @@ namespace Ccxc.Core.DbOrm
                 if (res != null && res.Count > 0) return res;
             }
 
-            var result = SimpleDb.GetList();
+            var result = SimpleDb.AsQueryable().ToListAsync().ConfigureAwait(false).GetAwaiter().GetResult();
             if (writeCache)
             {
                 var hashvalues = new Dictionary<string, object>();

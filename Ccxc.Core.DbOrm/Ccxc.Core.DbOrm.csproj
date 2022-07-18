@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MySqlConnector" Version="2.1.9" />
+    <PackageReference Include="MySqlConnector" Version="2.1.11" />
     <PackageReference Include="SqlSugarCore.MySqlConnector" Version="5.0.5.2" />
     <PackageReference Include="System.Net.NameResolution" Version="4.3.0" />
     <PackageReference Include="System.Threading.ThreadPool" Version="4.3.0" />

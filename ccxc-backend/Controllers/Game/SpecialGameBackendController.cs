@@ -491,5 +491,91 @@ namespace ccxc_backend.Controllers.Game
                 sum_rows = sum.Value
             });
         }
+
+        
+        [HttpHandler("POST", "/puzzle-backend/2021")]
+        public async Task PuzzleBackend2021(Request request, Response response)
+        {
+            var userSession = await CheckAuth.Check(request, response, AuthLevel.Member, true);
+            if (userSession == null) return;
+
+            //取得该用户GID
+            var groupBindDb = DbFactory.Get<UserGroupBind>();
+            var groupBindList = await groupBindDb.SelectAllFromCache();
+
+            var groupBindItem = groupBindList.FirstOrDefault(it => it.uid == userSession.uid);
+            if (groupBindItem == null)
+            {
+                await response.BadRequest("未确定组队？");
+                return;
+            }
+
+            var gid = groupBindItem.gid;
+
+            //取得进度
+            var progressDb = DbFactory.Get<Progress>();
+            var progress = await progressDb.SimpleDb.AsQueryable().Where(it => it.gid == gid).FirstAsync();
+            if (progress == null)
+            {
+                await response.BadRequest("没有进度，请返回首页重新开始。");
+                return;
+            }
+
+            var progressData = progress.data;
+            if (progressData == null)
+            {
+                await response.BadRequest("未找到可用存档，请联系管理员。");
+                return;
+            }
+
+            if (progressData.IsOpenMainProject == false)
+            {
+                await response.BadRequest("请求的部分还未解锁");
+                return;
+            }
+
+            //检查2021题目是否打开
+            if (!progressData.UnlockedProblems.Contains(2021))
+            {
+                await response.Unauthorized("不能访问您未打开的区域");
+                return;
+            }
+
+            //取得题目数据
+            var puzzleDb = DbFactory.Get<Puzzle>();
+            var puzzle = await puzzleDb.SimpleDb.AsQueryable().Where(it => it.second_key == 10000001).FirstAsync();
+            if (puzzle == null)
+            {
+                await response.BadRequest("未找到数据源。");
+                return;
+            }
+
+            //取出验证信息中的时间戳
+            IDictionary<string, object> headers = request.Header;
+            var xAuthToken = headers["x-auth-token"].ToString();
+            var xAuth = xAuthToken?.Split(" ").Select(it => it.Trim()).ToList();
+            var ts = xAuth[1];
+
+            _ = long.TryParse(ts, out long clientLocalTimeStamp);
+            var localTime = Ccxc.Core.Utils.UnixTimestamp.FromTimestamp(clientLocalTimeStamp);
+
+            string res;
+            if ((localTime.Hour == 1 && localTime.Minute == 5) || (localTime.Hour == 1 && localTime.Minute == 6))
+            {
+                //01:05~01:06 输出音频
+                res = puzzle.html;
+            }
+            else
+            {
+                //其他时间输出海报
+                res = puzzle.content;
+            }
+
+            await response.JsonResponse(200, new
+            {
+                status = 1,
+                content = res
+            });
+        }
     }
 }

@@ -14,7 +14,7 @@ namespace ccxc_backend.Config
         public string RedisConnStr { get; set; } = "127.0.0.1:6379";
 
         [OptionDescription("数据库连接字符串")]
-        public string DbConnStr { get; set; } = "Server=localhost;User=root;Database=ccxc_db;Port=3306;Password=lp1234xy;Charset=utf8;ConvertZeroDateTime=True";
+        public string DbConnStr { get; set; } = "Server=localhost;User=root;Database=ccxc_db;Port=3306;Password=lp1234xy;Charset=utf8mb4;ConvertZeroDateTime=True";
 
         [OptionDescription("调试模式：调试模式打开时，捕获的异常详情将通过HTTP直接返回给客户端，关闭时只返回简单错误消息和500提示码。True-打开 False-关闭，默认为False")]
         public bool DebugMode { get; set; } = false;
