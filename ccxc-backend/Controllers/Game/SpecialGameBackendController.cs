@@ -577,5 +577,234 @@ namespace ccxc_backend.Controllers.Game
                 content = res
             });
         }
+
+        [HttpHandler("POST", "/puzzle-backend/2040")]
+        public async Task PuzzleBackend2040(Request request, Response response)
+        {
+            var userSession = await CheckAuth.Check(request, response, AuthLevel.Member, true);
+            if (userSession == null) return;
+
+            var requestJson = request.Json<Backend2040Request>();
+
+            //判断请求是否有效
+            if (!Validation.Valid(requestJson, out string reason))
+            {
+                await response.BadRequest(reason);
+                return;
+            }
+
+
+            //取得该用户GID
+            var groupBindDb = DbFactory.Get<UserGroupBind>();
+            var groupBindList = await groupBindDb.SelectAllFromCache();
+
+            var groupBindItem = groupBindList.FirstOrDefault(it => it.uid == userSession.uid);
+            if (groupBindItem == null)
+            {
+                await response.BadRequest("未确定组队？");
+                return;
+            }
+
+            var gid = groupBindItem.gid;
+
+            //取得进度
+            var progressDb = DbFactory.Get<Progress>();
+            var progress = await progressDb.SimpleDb.AsQueryable().Where(it => it.gid == gid).FirstAsync();
+            if (progress == null)
+            {
+                await response.BadRequest("没有进度，请返回首页重新开始。");
+                return;
+            }
+
+            var progressData = progress.data;
+            if (progressData == null)
+            {
+                await response.BadRequest("未找到可用存档，请联系管理员。");
+                return;
+            }
+
+            if (progressData.IsOpenMainProject == false)
+            {
+                await response.BadRequest("请求的部分还未解锁");
+                return;
+            }
+
+            //检查2040题目是否打开
+            if (!progressData.UnlockedProblems.Contains(2040))
+            {
+                await response.Unauthorized("不能访问您未打开的区域");
+                return;
+            }
+
+            var context = requestJson.context;
+            if (string.IsNullOrEmpty(requestJson.current_input))
+            {
+                //输入为空的时候原样返回
+                await response.JsonResponse(200, new Backend2040Response
+                {
+                    status = 1,
+                    context = context
+                });
+                return;
+            }
+
+            var input = requestJson.current_input[0];
+            if (input == PartNumber.C_AC)
+            {
+                //AC-返回空结果
+                await response.JsonResponse(200, new Backend2040Response
+                {
+                    status = 1,
+                    context = CalcContext.Empty
+                });
+                return;
+            }
+            else if (input == PartNumber.C_SPACE)
+            {
+                //如果输入为空格：如果inputBuffer为空，则不执行任何操作。否则将inputBuffer压入buffer
+                if (string.IsNullOrEmpty(context.input_buffer))
+                {
+                    await response.JsonResponse(200, new Backend2040Response
+                    {
+                        status = 1,
+                        context = context
+                    });
+                    return;
+                }
+                else
+                {
+                    if (context.buffer.Count == 8) //如果暂存栈已经满了，就不让继续输入了
+                    {
+                        context.error = 4;
+                        await response.JsonResponse(200, new Backend2040Response
+                        {
+                            status = 1,
+                            context = context
+                        });
+                        return;
+                    }
+                    else
+                    {
+                        //将inputBuffer压入buffer，然后清空inputBuffer
+                        context.buffer.Add(new PartNumber
+                        {
+                            type = 0,
+                            content = context.input_buffer
+                        });
+                        context.input_buffer = "";
+                        await response.JsonResponse(200, new Backend2040Response
+                        {
+                            status = 1,
+                            context = context
+                        });
+                        return;
+                    }
+                }
+            }
+            else if(input == PartNumber.C_PLUS || input == PartNumber.C_MINUS || input == PartNumber.C_MULTIPLY || input == PartNumber.C_MOD)
+            {
+                // 如果输入为运算符：检查inputBuffer是否为空。如果inputBuffer不为空，先将inputBuffer压入buffer
+                if (!string.IsNullOrEmpty(context.input_buffer))
+                {
+                    context.buffer.Add(new PartNumber
+                    {
+                        type = 0,
+                        content = context.input_buffer
+                    });
+                    context.input_buffer = "";
+                }
+                // 检查buffer是否有至少两个数字，如果有，则弹出2个作为操作数
+                if (context.buffer.Count >= 2)
+                {
+                    var num1 = context.buffer[context.buffer.Count - 2];
+                    var num2 = context.buffer[context.buffer.Count - 1];
+                    context.buffer.RemoveAt(context.buffer.Count - 1);
+                    context.buffer.RemoveAt(context.buffer.Count - 1);
+
+                    //执行计算
+                    PartNumber result;
+                    if (input == PartNumber.C_PLUS)
+                    {
+                        result = num1 + num2;
+                    }
+                    else if (input == PartNumber.C_MINUS)
+                    {
+                        result = num1 - num2;
+                    }
+                    else if (input == PartNumber.C_MULTIPLY)
+                    {
+                        result = num1 * num2;
+                    }
+                    else if (input == PartNumber.C_MOD)
+                    {
+                        result = num1 % num2;
+                    }
+                    else
+                    {
+                        throw new Exception("不可能发生的情况");
+                    }
+                    //判断结果是否存在错误
+                    if (result.type == 2 || result.type == 3)
+                    {
+                        context.error = 1;
+                    }
+                    else if (result.type == 4)
+                    {
+                        context.error = 2;
+                    }
+                    else
+                    {
+                        context.buffer.Add(result);
+                        context.screen = result.content;
+                    }
+
+                    await response.JsonResponse(200, new Backend2040Response
+                    {
+                        status = 1,
+                        context = context
+                    });
+                    return;
+                }
+                else
+                {
+                    //buffer中数字不足，报错
+                    context.error = 3;
+                    await response.JsonResponse(200, new Backend2040Response
+                    {
+                        status = 1,
+                        context = context
+                    });
+                    return;
+                }
+            }
+            else if (PartNumber.CharDict.ContainsKey(input))
+            {
+                //不能输入“1”
+                if (input == 'A')
+                {
+                    context.error = 5;
+                }
+                //输入的是数字的新一位：追加到input_buffer中，然后让screen保持同步
+                context.input_buffer += input;
+                context.screen = context.input_buffer;
+                await response.JsonResponse(200, new Backend2040Response
+                {
+                    status = 1,
+                    context = context
+                });
+                return;
+            }
+            else
+            {
+                //输入的是非法字符，报错
+                context.error = 5;
+                await response.JsonResponse(200, new Backend2040Response
+                {
+                    status = 1,
+                    context = context
+                });
+                return;
+            }
+        }
     }
 }
