@@ -89,48 +89,73 @@ namespace ccxc_backend.Controllers.Game
 
         public static Dictionary<char, long> CharDict = new Dictionary<char, long>
         {
-            {'A', 1 },
-            {'B', 2 },
-            {'C', 4 },
-            {'D', 8 },
-            {'E', 16 },
-            {'F', 32 },
-            {'G', 64 },
-            {'H', 128 },
-            {'I', 256 },
-            {'J', 512 },
-            {'K', 1024 },
-            {'L', 2048 },
-            {'M', 4096 },
-            {'N', 8192 },
-            {'O', 16384 },
-            {'P', 32768 },
-            {'Q', 65536 }
+            {'0', 1 },
+            {'1', 2 },
+            {'2', 4 },
+            {'3', 8 },
+            {'4', 16 },
+            {'5', 32 },
+            {'6', 64 },
+            {'7', 128 },
+            {'8', 256 },
+            {'9', 512 },
+            {'A', 1024 },
+            {'B', 2048 },
+            {'C', 4096 },
+            {'D', 8192 },
+            {'E', 16384 },
+            {'F', 32768 },
+            {'G', 65536 }
         };
 
-        public const string Alphabet = "abcdefghijklmnopqrstuvwxyz";
-
-        //字符表 （额外字符：空格-表示数字之间的分隔符  运算符：+ - * %  .-AC
+        //原始数字 字符表 （额外字符：空格-表示数字之间的分隔符  运算符：+ - * %  \r-AC ~-负号
         public const char C_SPACE = ' ';
+        public const char C_NEGATIVE = '~';
         public const char C_PLUS = '+';
         public const char C_MINUS = '-';
         public const char C_MULTIPLY = '*';
         public const char C_MOD = '%';
-        public const char C_AC = '.';
+        public const char C_AC = '\r';
+
+        //新数字 字符表
+        public const string Alphabet = "abcdefghijklmnopqrstuvwxyz";
+        public const char N_NEGATIVE = '=';
 
         public long GetValue()
         {
             if (type == 0)
             {
+                //首先判断第一个字符是否为负号(C_NEGATIVE)
+                bool isNegative = content[0] == C_NEGATIVE;
+                if (isNegative)
+                {
+                    content = content[1..];
+                }
+
                 var sum = 0L;
                 for (int i = 0; i < content.Length; i++)
                 {
                     sum += CharDict[content[i]];
                 }
-                return sum;
+
+                if (isNegative)
+                {
+                    return -1 * sum;
+                }
+                else
+                {
+                    return sum;
+                }
             }
             else
             {
+                //首先判断第一个字符是否为负号(N_NEGATIVE)
+                bool isNegative = content[0] == N_NEGATIVE;
+                if (isNegative)
+                {
+                    content = content[1..];
+                }
+
                 //26进制转10进制
                 var sum = 0L;
                 for (int i = 0; i < content.Length; i++)
@@ -138,12 +163,26 @@ namespace ccxc_backend.Controllers.Game
                     var index = Alphabet.IndexOf(content[i]);
                     sum += index * (long)Math.Pow(26, content.Length - i - 1);
                 }
-                return sum;
+
+                if (isNegative)
+                {
+                    return -1 * sum;
+                }
+                else
+                {
+                    return sum;
+                }
             }
         }
 
         public static PartNumber CreateNew(long value)
         {
+            //首先判断待转换数字是否为负数
+            bool isNegative = value < 0;
+            if (isNegative)
+            {
+                value = -value;
+            }
             //将value转换为26进制
             var sb = new StringBuilder();
             while (value > 0)
@@ -152,6 +191,12 @@ namespace ccxc_backend.Controllers.Game
                 sb.Insert(0, Alphabet[(int)remainder]);
                 value /= 26;
             }
+            //如果是负数，则在字符串前面加上负号(N_NEGATIVE)
+            if (isNegative)
+            {
+                sb.Insert(0, N_NEGATIVE);
+            }
+            
             return new PartNumber
             {
                 type = 1,

@@ -701,7 +701,48 @@ namespace ccxc_backend.Controllers.Game
                     }
                 }
             }
-            else if(input == PartNumber.C_PLUS || input == PartNumber.C_MINUS || input == PartNumber.C_MULTIPLY || input == PartNumber.C_MOD)
+            else if (input == PartNumber.C_NEGATIVE)
+            {
+                //如果输入为负号：如果inputBuffer为空，就在inputBuffer中填入一个负号
+                if (string.IsNullOrEmpty(context.input_buffer))
+                {
+                    context.input_buffer.Append(PartNumber.C_NEGATIVE);
+                    context.screen = context.input_buffer;
+                    await response.JsonResponse(200, new Backend2040Response
+                    {
+                        status = 1,
+                        context = context
+                    });
+                    return;
+                }
+                else
+                {
+                    //否则，判断inputBuffer的第一个字符是否为负号
+                    if (context.input_buffer[0] == PartNumber.C_NEGATIVE)
+                    {
+                        //如果是，则将inputBuffer的第一个字符去掉。
+                        context.input_buffer = context.input_buffer[1..];
+                        context.screen = context.input_buffer;
+                        await response.JsonResponse(200, new Backend2040Response
+                        {
+                            status = 1,
+                            context = context
+                        });
+                    }
+                    else
+                    {
+                        //否则，在inputBuffer的开头填入一个负号
+                        context.input_buffer = PartNumber.C_NEGATIVE + context.input_buffer;
+                        context.screen = context.input_buffer;
+                        await response.JsonResponse(200, new Backend2040Response
+                        {
+                            status = 1,
+                            context = context
+                        });
+                    }
+                }
+            }
+            else if (input == PartNumber.C_PLUS || input == PartNumber.C_MINUS || input == PartNumber.C_MULTIPLY || input == PartNumber.C_MOD)
             {
                 // 如果输入为运算符：检查inputBuffer是否为空。如果inputBuffer不为空，先将inputBuffer压入buffer
                 if (!string.IsNullOrEmpty(context.input_buffer))
