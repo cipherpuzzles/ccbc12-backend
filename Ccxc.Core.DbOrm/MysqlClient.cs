@@ -9,7 +9,7 @@ namespace Ccxc.Core.DbOrm
 {
     public abstract class MysqlClient<T> where T : class, new()
     {
-        public SqlBaseClient Db => new SqlBaseClient(ConnStr, DbType.MySql, IfInitKeyFromAttribute);
+        public SqlBaseClient Db => new SqlBaseClient(ConnStr, DbType.MySqlConnector, IfInitKeyFromAttribute);
 
         public IDataCache Cache { get; set; } = null;
 

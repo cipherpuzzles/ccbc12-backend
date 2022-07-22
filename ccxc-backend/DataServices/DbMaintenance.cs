@@ -14,7 +14,7 @@ namespace ccxc_backend.DataServices
         public DbMaintenance(string connStr)
         {
             DbConnStr = connStr;
-            DbBase = new SqlBaseClient(connStr, SqlSugar.DbType.MySql);
+            DbBase = new SqlBaseClient(connStr, SqlSugar.DbType.MySqlConnector);
         }
 
         public void InitDatabase()
