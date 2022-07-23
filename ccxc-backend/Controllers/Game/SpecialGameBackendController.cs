@@ -578,7 +578,7 @@ namespace ccxc_backend.Controllers.Game
             });
         }
 
-        [HttpHandler("POST", "/puzzle-backend/2040")]
+        [HttpHandler("POST", "/puzzle-backend/calc")]
         public async Task PuzzleBackend2040(Request request, Response response)
         {
             var userSession = await CheckAuth.Check(request, response, AuthLevel.Member, true);
@@ -656,6 +656,16 @@ namespace ccxc_backend.Controllers.Game
                 {
                     status = 1,
                     context = CalcContext.Empty
+                });
+                return;
+            }
+            else if (context.error != 0)
+            {
+                //有错误时原样返回
+                await response.JsonResponse(200, new
+                {
+                    status = 1,
+                    context = context
                 });
                 return;
             }
@@ -821,7 +831,7 @@ namespace ccxc_backend.Controllers.Game
             else if (PartNumber.CharDict.ContainsKey(input))
             {
                 //不能输入“1”
-                if (input == 'A')
+                if (input == '0')
                 {
                     context.error = 5;
                 }

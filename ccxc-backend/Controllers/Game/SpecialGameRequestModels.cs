@@ -185,11 +185,18 @@ namespace ccxc_backend.Controllers.Game
             }
             //将value转换为26进制
             var sb = new StringBuilder();
-            while (value > 0)
+            if (value == 0)
             {
-                var remainder = value % 26;
-                sb.Insert(0, Alphabet[(int)remainder]);
-                value /= 26;
+                sb.Append(Alphabet[0]);
+            }
+            else
+            {
+                while (value > 0)
+                {
+                    var remainder = value % 26;
+                    sb.Insert(0, Alphabet[(int)remainder]);
+                    value /= 26;
+                }
             }
             //如果是负数，则在字符串前面加上负号(N_NEGATIVE)
             if (isNegative)
