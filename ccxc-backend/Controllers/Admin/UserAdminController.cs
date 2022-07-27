@@ -19,6 +19,18 @@ namespace ccxc_backend.Controllers.Admin
             var userSession = await CheckAuth.Check(request, response, AuthLevel.Organizer);
             if (userSession == null) return;
 
+            var requestJson = request.Json<AdminUserQuery>();
+
+            //判断请求是否有效
+            if (!Validation.Valid(requestJson, out var reason))
+            {
+                await response.BadRequest(reason);
+                return;
+            }
+
+            if (requestJson.page_num == 0) requestJson.page_num = 1;
+            if (requestJson.page_size == 0) requestJson.page_size = 20;
+
             var cache = DbFactory.GetCache();
             //登录成功
             var keyPattern = cache.GetUserSessionKey("*");
@@ -29,7 +41,14 @@ namespace ccxc_backend.Controllers.Admin
                 .ToDictionary(it => it.Key, it => it.First() == null ? DateTime.MinValue : it.First().last_update);
 
             var userDb = DbFactory.Get<User>();
-            var userData = (await userDb.SelectAllFromCache()).Select(it =>
+            IEnumerable<user> allUserList = await userDb.SelectAllFromCache();
+
+            if (requestJson.is_online == 1)
+            {
+                allUserList = allUserList.Where(it => lastActionDict.ContainsKey(it.uid));
+            }
+
+            IEnumerable<UserView> userData = allUserList.Select(it =>
             {
                 var ret = new UserView(it);
                 if (lastActionDict.ContainsKey(it.uid))
@@ -42,10 +61,24 @@ namespace ccxc_backend.Controllers.Admin
                 return ret;
             }).OrderBy(it => it.uid);
 
+            if (!string.IsNullOrEmpty(requestJson.username))
+            {
+                userData = userData.Where(it => it.username.Contains(requestJson.username));
+            }
+
+            if (!string.IsNullOrEmpty(requestJson.email))
+            {
+                userData = userData.Where(it => it.email.Contains(requestJson.email));
+            }
+
+            var sumRows = userData.Count();
+            userData = userData.Skip((requestJson.page_num - 1) * requestJson.page_size).Take(requestJson.page_size);
+
             await response.JsonResponse(200, new GetAllUserResponse
             {
                 status = 1,
-                users = userData.ToList()
+                users = userData.ToList(),
+                sum_rows = sumRows
             });
         }
 

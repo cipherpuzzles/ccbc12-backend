@@ -11,6 +11,7 @@ namespace ccxc_backend.Controllers.Admin
     public class GetAllUserResponse : BasicResponse
     {
         public List<UserView> users { get; set; }
+        public int sum_rows { get; set; }
     }
 
     public class UserView : user
@@ -41,5 +42,15 @@ namespace ccxc_backend.Controllers.Admin
     {
         [Required(Message = "UID不能为空")]
         public int uid { get; set; }
+    }
+
+    public class AdminUserQuery
+    {
+        public int is_online { get; set; }
+        public string username { get; set; }
+        public string email { get; set; }
+        
+        public int page_num { get; set; }
+        public int page_size { get; set; }
     }
 }
