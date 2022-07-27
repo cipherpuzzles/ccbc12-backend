@@ -28,19 +28,7 @@ namespace ccxc_backend.Controllers.Groups
                 await response.BadRequest(reason);
                 return;
             }
-
-            //判断当前在允许新建组队的时间范围内
             var now = DateTime.Now;
-
-            if(Config.Config.Options.RegDeadline > 0)
-            {
-                var regDeadline = UnixTimestamp.FromTimestamp(Config.Config.Options.RegDeadline);
-                if(now > regDeadline)
-                {
-                    await response.BadRequest($"报名截止时间 （{regDeadline:yyyy-MM-dd HH:mm:ss}） 已过。");
-                    return;
-                }
-            }
 
             //判断当前用户不属于任何组队
             var groupBindDb = DbFactory.Get<UserGroupBind>();
@@ -200,16 +188,13 @@ namespace ccxc_backend.Controllers.Groups
             if (requestJson.groupname != groupItem.groupname)
             {
 
-                var now = DateTime.Now;
-
-                if (Config.Config.Options.RegDeadline > 0)
+                //判断该用户是否已开赛
+                var progressDb = DbFactory.Get<Progress>();
+                var progress = await progressDb.SimpleDb.AsQueryable().Where(it => it.gid == gid).FirstAsync();
+                if (progress != null)
                 {
-                    var regDeadline = UnixTimestamp.FromTimestamp(Config.Config.Options.RegDeadline);
-                    if (now > regDeadline)
-                    {
-                        await response.BadRequest($"报名截止时间 （{regDeadline:yyyy-MM-dd HH:mm:ss}） 已过，现在不能修改队名。");
-                        return;
-                    }
+                    await response.BadRequest("开赛后无法再修改队伍信息。");
+                    return;
                 }
 
                 groupItem.groupname = requestJson.groupname;
@@ -233,19 +218,6 @@ namespace ccxc_backend.Controllers.Groups
             var userSession = await CheckAuth.Check(request, response, AuthLevel.TeamLeader);
             if (userSession == null) return;
 
-            //判断当前在允许新建组队的时间范围内
-            var now = DateTime.Now;
-
-            if (Config.Config.Options.RegDeadline > 0)
-            {
-                var regDeadline = UnixTimestamp.FromTimestamp(Config.Config.Options.RegDeadline);
-                if (now > regDeadline)
-                {
-                    await response.BadRequest($"报名截止时间 （{regDeadline:yyyy-MM-dd HH:mm:ss}） 已过，现在不能修改队伍信息。");
-                    return;
-                }
-            }
-
             //取得该用户GID
             var groupBindDb = DbFactory.Get<UserGroupBind>();
             var groupBindList = await groupBindDb.SelectAllFromCache();
@@ -258,6 +230,15 @@ namespace ccxc_backend.Controllers.Groups
             }
 
             var gid = groupBindItem.gid;
+
+            //判断该用户是否已开赛
+            var progressDb = DbFactory.Get<Progress>();
+            var progress = await progressDb.SimpleDb.AsQueryable().Where(it => it.gid == gid).FirstAsync();
+            if (progress != null)
+            {
+                await response.BadRequest("开赛后无法再修改队伍信息。");
+                return;
+            }
 
             //取出组队
             var groupDb = DbFactory.Get<UserGroup>();
@@ -283,7 +264,7 @@ namespace ccxc_backend.Controllers.Groups
                 {
                     var user = userDict[uid];
                     user.roleid = 1;
-                    user.update_time = now;
+                    user.update_time = DateTime.Now;
                     updateUser.Add(user);
                 }
             }
@@ -318,19 +299,6 @@ namespace ccxc_backend.Controllers.Groups
                 await response.BadRequest("只有队员才可退出组队");
             }
 
-            //判断当前在允许新建组队的时间范围内
-            var now = DateTime.Now;
-
-            if (Config.Config.Options.RegDeadline > 0)
-            {
-                var regDeadline = UnixTimestamp.FromTimestamp(Config.Config.Options.RegDeadline);
-                if (now > regDeadline)
-                {
-                    await response.BadRequest($"报名截止时间 （{regDeadline:yyyy-MM-dd HH:mm:ss}） 已过，现在不能修改队伍信息。");
-                    return;
-                }
-            }
-
             //取得该用户GID
             var groupBindDb = DbFactory.Get<UserGroupBind>();
             var groupBindList = await groupBindDb.SelectAllFromCache();
@@ -343,6 +311,15 @@ namespace ccxc_backend.Controllers.Groups
             }
 
             var gid = groupBindItem.gid;
+
+            //判断该用户是否已开赛
+            var progressDb = DbFactory.Get<Progress>();
+            var progress = await progressDb.SimpleDb.AsQueryable().Where(it => it.gid == gid).FirstAsync();
+            if (progress != null)
+            {
+                await response.BadRequest("开赛后无法再修改队伍信息。");
+                return;
+            }
 
             //取出组队
             var groupDb = DbFactory.Get<UserGroup>();
@@ -367,7 +344,7 @@ namespace ccxc_backend.Controllers.Groups
             }
 
             user.roleid = 1;
-            user.update_time = now;
+            user.update_time = DateTime.Now;
 
             await userDb.SimpleDb.AsUpdateable(user).ExecuteCommandAsync();
             await userDb.InvalidateCache();
@@ -400,19 +377,6 @@ namespace ccxc_backend.Controllers.Groups
                 return;
             }
 
-            //判断当前在允许新建组队的时间范围内
-            var now = DateTime.Now;
-
-            if (Config.Config.Options.RegDeadline > 0)
-            {
-                var regDeadline = UnixTimestamp.FromTimestamp(Config.Config.Options.RegDeadline);
-                if (now > regDeadline)
-                {
-                    await response.BadRequest($"报名截止时间 （{regDeadline:yyyy-MM-dd HH:mm:ss}） 已过，现在不能修改队伍信息。");
-                    return;
-                }
-            }
-
             //取得GID
             var groupBindDb = DbFactory.Get<UserGroupBind>();
             var groupBindList = await groupBindDb.SelectAllFromCache();
@@ -425,6 +389,15 @@ namespace ccxc_backend.Controllers.Groups
             }
 
             var gid = groupBindItem.gid;
+
+            //判断该用户是否已开赛
+            var progressDb = DbFactory.Get<Progress>();
+            var progress = await progressDb.SimpleDb.AsQueryable().Where(it => it.gid == gid).FirstAsync();
+            if (progress != null)
+            {
+                await response.BadRequest("开赛后无法再修改队伍信息。");
+                return;
+            }
 
             //取得目标用户的gid
 
@@ -466,7 +439,7 @@ namespace ccxc_backend.Controllers.Groups
             }
 
             user.roleid = 1;
-            user.update_time = now;
+            user.update_time = DateTime.Now;
 
             await userDb.SimpleDb.AsUpdateable(user).ExecuteCommandAsync();
             await userDb.InvalidateCache();

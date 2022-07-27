@@ -47,7 +47,7 @@ namespace ccxc_backend.Config
         public long EndTime { get; set; } = 1661083200000;
 
         [OptionDescription("报名截止日期，0为不限制，Unix时间戳（毫秒）")]
-        public long RegDeadline { get; set; } = 1660305600000;
+        public long RegDeadline { get; set; } = 0;
 
         [OptionDescription("至少完成多少个区域以后才可见PreFinalMeta")]
         public int ShowFinalGroups { get; set; } = 4;

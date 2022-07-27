@@ -35,21 +35,8 @@ namespace ccxc_backend.Controllers.Game
             {
                 //该用户无组队
 
-                //取得进度
-                var userTempProgressDb = DbFactory.Get<UserTempProgress>();
-                var progress = await userTempProgressDb.SimpleDb.AsQueryable().Where(it => it.uid == userSession.uid).FirstAsync();
-                if (progress == null)
-                {
-                    isFirst = 1;
-                    //初始化
-                    progress = new user_temp_progress
-                    {
-                        uid = userSession.uid,
-                        prologue_data = RandomProblem.Init()
-                    };
-
-                    await userTempProgressDb.SimpleDb.AsInsertable(progress).ExecuteCommandAsync();
-                }
+                await response.BadRequest("必须以组队状态参与。");
+                return;
             }
             else
             {
@@ -91,7 +78,7 @@ namespace ccxc_backend.Controllers.Game
             {
                 token = userSession.token
             };
-            await cache.Put(ticketKey, ticketSession, 15000); //15秒内登录完成有效
+            await cache.Put(ticketKey, ticketSession, 30000); //30秒内登录完成有效
 
             await response.JsonResponse(200, new PuzzleStartResponse
             {

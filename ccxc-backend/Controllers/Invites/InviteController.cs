@@ -29,18 +29,6 @@ namespace ccxc_backend.Controllers.Invites
                 return;
             }
 
-            //判断当前在允许新建组队的时间范围内
-            var now = DateTime.Now;
-
-            if (Config.Config.Options.RegDeadline > 0)
-            {
-                var regDeadline = UnixTimestamp.FromTimestamp(Config.Config.Options.RegDeadline);
-                if (now > regDeadline)
-                {
-                    await response.BadRequest($"报名截止时间 （{regDeadline:yyyy-MM-dd HH:mm:ss}） 已过。");
-                }
-            }
-
             //取得该用户GID
             var groupBindDb = DbFactory.Get<UserGroupBind>();
             var groupBindList = await groupBindDb.SelectAllFromCache();
@@ -53,6 +41,15 @@ namespace ccxc_backend.Controllers.Invites
             }
 
             var gid = groupBindItem.gid;
+
+            //判断该用户是否已开赛
+            var progressDb = DbFactory.Get<Progress>();
+            var progress = await progressDb.SimpleDb.AsQueryable().Where(it => it.gid == gid).FirstAsync();
+            if (progress != null)
+            {
+                await response.BadRequest("开赛后无法再修改队伍信息。");
+                return;
+            }
 
             //取得该GID已绑定人数
             var numberOfGroup = groupBindList.Count(it => it.gid == gid);

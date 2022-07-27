@@ -9,6 +9,7 @@ namespace ccxc_backend.Controllers.System
     public class DefaultSettingResponse : BasicResponse
     {
         public long start_time { get; set; }
+        public int start_type { get; set; }
     }
 
     public class ScoreBoardItem

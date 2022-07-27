@@ -17,10 +17,58 @@ namespace ccxc_backend.Controllers.System
         [HttpHandler("POST", "/get-default-setting")]
         public async Task GetDefaultSetting(Request request, Response response)
         {
+            IDictionary<string, object> headers = request.Header;
+
+            var isLogin = false;
+            if (headers.ContainsKey("user-token"))
+            {
+                var token = headers["user-token"].ToString();
+                if (!string.IsNullOrEmpty(token))
+                {
+                    isLogin = true;
+                }
+            }
+
+            if (!isLogin)
+            {
+                await response.JsonResponse(200, new DefaultSettingResponse
+                {
+                    status = 1,
+                    start_time = Config.Config.Options.StartTime,
+                    start_type = 0
+                });
+                return;
+            }
+
+            //已登录
+            var userSession = await CheckAuth.Check(request, response, AuthLevel.Normal);
+            if (userSession == null) return;
+
+            //尝试读取此用户有无进度
+            var startType = 0;
+            
+            //取得该用户GID
+            var groupBindDb = DbFactory.Get<UserGroupBind>();
+            var groupBindList = await groupBindDb.SelectAllFromCache();
+
+            var groupBindItem = groupBindList.FirstOrDefault(it => it.uid == userSession.uid);
+            if (groupBindItem != null)
+            {
+                var gid = groupBindItem.gid;
+                //取得进度
+                var progressDb = DbFactory.Get<Progress>();
+                var progress = await progressDb.SimpleDb.AsQueryable().Where(it => it.gid == gid).FirstAsync();
+                if (progress != null)
+                {
+                    startType = 1;
+                }
+            }
+
             await response.JsonResponse(200, new DefaultSettingResponse
             {
                 status = 1,
-                start_time = Config.Config.Options.StartTime
+                start_time = Config.Config.Options.StartTime,
+                start_type = startType
             });
         }
 
