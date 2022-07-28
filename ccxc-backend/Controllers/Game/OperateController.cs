@@ -42,7 +42,8 @@ namespace ccxc_backend.Controllers.Game
                 answer = requestJson.answer
             };
 
-            var answer = requestJson.answer.ToLower().Replace(" ", "").Replace("-", "");
+            //忽略答案中的空格、制表符和减号
+            var answer = requestJson.answer.ToLower().Replace(" ", "").Replace("-", "").Replace("\t", "");
 
             //取得该用户GID
             var groupBindDb = DbFactory.Get<UserGroupBind>();
@@ -467,9 +468,13 @@ namespace ccxc_backend.Controllers.Game
                     
             }
 
+            if (puzzleItem.answer_type == 3)
+            {
+                extendFlag = 1;
+            }
 
             //12. 检查当前题目是否有扩展内容，如果有，必须刷新题目区域
-            if (puzzleItem.answer_type != 3)
+            else if (puzzleItem.answer_type != 3)
             {
                 extendFlag = string.IsNullOrEmpty(puzzleItem.extend_content) ? 0 : 16; //如果存在扩展，extend_flag应为16，此时前端需要刷新，如果需要跳转final，extend_flag应为1。否则应为0。
             }
