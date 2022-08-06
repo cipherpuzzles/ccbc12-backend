@@ -63,12 +63,12 @@ namespace ccxc_backend.Controllers.Admin
 
             if (!string.IsNullOrEmpty(requestJson.username))
             {
-                userData = userData.Where(it => it.username.Contains(requestJson.username));
+                userData = userData.Where(it => it.username.Contains(requestJson.username, StringComparison.InvariantCultureIgnoreCase));
             }
 
             if (!string.IsNullOrEmpty(requestJson.email))
             {
-                userData = userData.Where(it => it.email.Contains(requestJson.email));
+                userData = userData.Where(it => it.email.Contains(requestJson.email, StringComparison.InvariantCultureIgnoreCase));
             }
 
             var sumRows = userData.Count();

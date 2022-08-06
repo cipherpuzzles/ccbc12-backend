@@ -31,6 +31,7 @@ namespace ccxc_backend.Controllers.Admin
     public class GetGroupOverviewResponse : BasicResponse
     {
         public List<GetGroupOverview> groups { get; set; }
+        public int sum_rows { get; set; }
     }
 
     public class GetGroupOverview
@@ -64,6 +65,10 @@ namespace ccxc_backend.Controllers.Admin
         /// 0-默认顺序（GID顺序） 1-排行榜顺序（分数）
         /// </summary>
         public int order { get; set; }
+        
+        public string groupname { get; set; }
+        public int page_num { get; set; }
+        public int page_size { get; set; }
     }
 
     public class AdminGroupDetailResponse : BasicResponse

@@ -529,7 +529,7 @@ namespace ccxc_backend.Controllers.Game
             //根据请求排序
             if (requestJson.type == 0)
             {
-                resultList = resultList.OrderBy(it => it.first_solve_time).ToList();
+                resultList = resultList.OrderByDescending(it => it.first_solve_time).ToList();
             }
             else if (requestJson.type == 1)
             {

@@ -200,7 +200,7 @@ namespace ccxc_backend.Controllers.Game
                 answerLog.status = 5;
                 await answerLogDb.SimpleDb.AsInsertable(answerLog).ExecuteCommandAsync();
 
-                await response.BadRequest("存档进度不一致，请联系管理员。");
+                await response.BadRequest("存档进度不一致，请尝试刷新。");
                 return;
             }
 

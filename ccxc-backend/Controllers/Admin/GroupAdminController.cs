@@ -147,8 +147,29 @@ namespace ccxc_backend.Controllers.Admin
                 return;
             }
 
+            if (requestJson.page_num == 0) requestJson.page_num = 1;
+            if (requestJson.page_size == 0) requestJson.page_size = 20;
+
             var groupDb = DbFactory.Get<UserGroup>();
-            var groupList = await groupDb.SelectAllFromCache();
+            IEnumerable<user_group> AllGroupList = await groupDb.SelectAllFromCache();
+
+            if (!string.IsNullOrEmpty(requestJson.groupname))
+            {
+                AllGroupList = AllGroupList.Where(it => it.groupname.Contains(requestJson.groupname, StringComparison.InvariantCultureIgnoreCase));
+            }
+
+            int sumRows = 0;
+            IEnumerable<user_group> groupList;
+            if (requestJson.order == 0)
+            {
+                AllGroupList = AllGroupList.OrderBy(it => it.gid);
+                sumRows = AllGroupList.Count();
+                groupList = AllGroupList.Skip((requestJson.page_num - 1) * requestJson.page_size).Take(requestJson.page_size);
+            }
+            else
+            {
+                groupList = AllGroupList;
+            }
 
             var groupBindDb = DbFactory.Get<UserGroupBind>();
             var groupBindList = await groupBindDb.SelectAllFromCache();
@@ -204,14 +225,18 @@ namespace ccxc_backend.Controllers.Admin
             }
             else
             {
-                res = resList.OrderByDescending(it => it.is_finish).ThenBy(it => it.finish_time).ThenByDescending(it => it.finished_group_count).ThenByDescending(it => it.finished_puzzle_count)
-                    .ThenByDescending(it => it.is_finish_prologue).ThenByDescending(it => it.prologue_progress).ToList();
+                resList = resList.OrderByDescending(it => it.is_finish).ThenBy(it => it.finish_time).ThenByDescending(it => it.finished_group_count).ThenByDescending(it => it.finished_puzzle_count)
+                    .ThenByDescending(it => it.is_finish_prologue).ThenByDescending(it => it.prologue_progress);
+
+                sumRows = resList.Count();
+                res = resList.Skip((requestJson.page_num - 1) * requestJson.page_size).Take(requestJson.page_size).ToList();
             }
 
             await response.JsonResponse(200, new GetGroupOverviewResponse
             {
                 status = 1,
-                groups = res
+                groups = res,
+                sum_rows = sumRows
             });
         }
 
