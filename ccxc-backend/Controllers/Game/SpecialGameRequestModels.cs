@@ -89,37 +89,37 @@ namespace ccxc_backend.Controllers.Game
 
         public static Dictionary<char, long> CharDict = new Dictionary<char, long>
         {
-            {'0', 1 },
-            {'1', 2 },
-            {'2', 4 },
-            {'3', 8 },
-            {'4', 16 },
-            {'5', 32 },
-            {'6', 64 },
-            {'7', 128 },
-            {'8', 256 },
-            {'9', 512 },
-            {'A', 1024 },
-            {'B', 2048 },
-            {'C', 4096 },
-            {'D', 8192 },
-            {'E', 16384 },
-            {'F', 32768 },
-            {'G', 65536 }
+            {'ɀ', 1 }, //0
+            {'Ɂ', 2 }, //1
+            {'ɂ', 4 }, //2
+            {'Ƀ', 8 }, //3
+            {'Ʉ', 16 }, //4
+            {'Ʌ', 32 }, //5
+            {'Ɇ', 64 }, //6
+            {'ɇ', 128 }, //7
+            {'Ɉ', 256 }, //8
+            {'ɉ', 512 }, //9
+            {'Ɋ', 1024 }, //A
+            {'ɋ', 2048 }, //B
+            {'Ɍ', 4096 }, //C
+            {'ɍ', 8192 }, //D
+            {'Ɏ', 16384 }, //E
+            {'ɏ', 32768 }, //F
+            {'ɐ', 65536 } //G
         };
 
         //原始数字 字符表 （额外字符：空格-表示数字之间的分隔符  运算符：+ - * %  \r-AC ~-负号
         public const char C_SPACE = ' ';
         public const char C_NEGATIVE = '~';
-        public const char C_PLUS = '+';
-        public const char C_MINUS = '-';
-        public const char C_MULTIPLY = '*';
-        public const char C_MOD = '%';
+        public const char C_PLUS = 'х'; //+
+        public const char C_MINUS = 'ц'; //-
+        public const char C_MULTIPLY = 'ч'; //*
+        public const char C_MOD = 'щ'; //%    /(除号)- ш
         public const char C_AC = '\r';
 
         //新数字 字符表
         public const string Alphabet = "abcdefghijklmnopqrstuvwxyz";
-        public const char N_NEGATIVE = '=';
+        public const char N_NEGATIVE = '-';
 
         public long GetValue()
         {
