@@ -377,7 +377,9 @@ namespace ccxc_backend.Controllers.Game
                 power_point = progress.power_point,
                 power_point_calc_time = progress.power_point_update_time,
                 power_point_increase_rate = await RedisNumberCenter.GetInt("power_increase_rate"),
-                time_probe_cost = await RedisNumberCenter.GetInt("time_probe_cost")
+                time_probe_cost = await RedisNumberCenter.GetInt("time_probe_cost"),
+                try_answer_cost = await RedisNumberCenter.GetInt("try_answer_cost"),
+                try_meta_answer_cost = await RedisNumberCenter.GetInt("try_meta_answer_cost"),
             };
             await response.JsonResponse(200, res);
         }

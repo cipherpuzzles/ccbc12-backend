@@ -46,6 +46,8 @@ namespace ccxc_backend.Controllers.Game
         public DateTime power_point_calc_time { get; set; }
         public int power_point_increase_rate { get; set; }
         public int time_probe_cost { get; set; }
+        public int try_answer_cost { get; set; }
+        public int try_meta_answer_cost { get; set; }
     }
 
     public class SimplePuzzleGroup
